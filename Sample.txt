@@ -1,0 +1,4 @@
+1=Hello
+2=Goodbye
+3=You hit {dragon's name}.
+4=Adventure ends. Bye.
