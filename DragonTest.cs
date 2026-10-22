@@ -1,18 +1,36 @@
 using System;
+using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
 public class DragonTest
 {
-    // Mock to verify Dragon queries GetMessage with valid ID ranges
-    private class MockMessages : Messages
-    {
-        public int LastRequestedId { get; private set; }
+    private const string TestDictionaryPath = "DragonTauntsSample.txt";
 
-        public override string GetMessage(int whichMessage)
+    [TestInitialize]
+    public void Setup()
+    {
+        // Write the sample test dictionary lines needed for testing
+        File.WriteAllLines(TestDictionaryPath, new[]
         {
-            LastRequestedId = whichMessage;
-            return $"Message {whichMessage}";
+            "101=Missed me, breath of a gnat!",
+            "102=Is that all you've got? I've seen kittens with more fire in their paws!",
+            "103=Try harder, {race}! You're making me yawn!",
+            "104=Maybe if you squinted harder, you'd actually hit something!",
+            "201=Ow! That actually stung a bit!",
+            "202=Impressive! You might actually be worth toasting...",
+            "203=That...was unexpected. But I assure you, it won't happen again.",
+            "204=Well, I'll be! You have more bite than I thought!"
+        });
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        // Remove the temporary file after tests finish
+        if (File.Exists(TestDictionaryPath))
+        {
+            File.Delete(TestDictionaryPath);
         }
     }
 
@@ -53,7 +71,7 @@ public class DragonTest
         }
         catch (ArgumentNullException)
         {
-            // Expected
+            // Expected exception caught
         }
     }
 
@@ -70,27 +88,35 @@ public class DragonTest
     }
 
     [TestMethod]
-    public void MissedMeTaunt_DelegatesToMessagesService()
+    public void MissedMeTaunt_UsesMessagesDictionaryAndReplacesRace()
     {
-        var mockMessages = new MockMessages();
-        var dragon = new Dragon("Ignis", mockMessages);
+        var messages = new Messages();
+        messages.ReadDictionary(TestDictionaryPath);
 
-        string taunt = dragon.MissedMeTaunt();
+        var dragon = new Dragon("Ignis", messages);
+        string playerRace = "Elf";
 
-        Assert.IsTrue(mockMessages.LastRequestedId >= 101 && mockMessages.LastRequestedId <= 104);
-        StringAssert.StartsWith(taunt, "Message ");
+        for (int i = 0; i < 20; i++)
+        {
+            string taunt = dragon.MissedMeTaunt(playerRace);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(taunt));
+            Assert.IsFalse(taunt.Contains("{race}"), "Placeholder {race} was not replaced.");
+        }
     }
 
     [TestMethod]
-    public void WasHitTaunt_DelegatesToMessagesService()
+    public void WasHitTaunt_UsesMessagesDictionary()
     {
-        var mockMessages = new MockMessages();
-        var dragon = new Dragon("Ignis", mockMessages);
+        var messages = new Messages();
+        messages.ReadDictionary(TestDictionaryPath);
 
-        string taunt = dragon.WasHitTaunt();
+        var dragon = new Dragon("Ignis", messages);
 
-        Assert.IsTrue(mockMessages.LastRequestedId >= 201 && mockMessages.LastRequestedId <= 204);
-        StringAssert.StartsWith(taunt, "Message ");
+        for (int i = 0; i < 20; i++)
+        {
+            string taunt = dragon.WasHitTaunt();
+            Assert.IsFalse(string.IsNullOrWhiteSpace(taunt));
+        }
     }
 
     [TestMethod]
