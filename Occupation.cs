@@ -15,13 +15,13 @@ public class OccupationRules
         switch (occupation)
         {
             case Occupation.Fighter:
-                return new Weapon("Sword", 10, "/==>");
+                return Weapon.LongSword;
             case Occupation.Magician:
-                return new Weapon("Staff", 8, "|*");
+                return Weapon.LightningBoltSpell;
             case Occupation.Theif:
-                return new Weapon("Dagger", 6, "/>");
+                return Weapon.Dagger;
             case Occupation.Archer:
-                return new Weapon("Bow", 7, ")-->");
+                return Weapon.LongBow;
             default:
                 throw new ArgumentOutOfRangeException(nameof(occupation));
         }

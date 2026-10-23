@@ -1,0 +1,198 @@
+using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+[TestClass]
+public class CharacterCreationTests
+{
+    [TestMethod]
+    public void PlayerConstructor_StoresCharacterChoices()
+    {
+        Player player = new Player(
+            "Aria",
+            Race.Elf,
+            Occupation.Fighter);
+
+        Assert.AreEqual("Aria", player.Name);
+        Assert.AreEqual(Race.Elf, player.Race);
+        Assert.AreEqual(Occupation.Fighter, player.Occupation);
+        Assert.AreEqual(Weapon.LongSword, player.Weapon);
+        Assert.IsFalse(player.HasRolledStats);
+    }
+
+    [TestMethod]
+    public void PlayerConstructor_TrimsName()
+    {
+        Player player = new Player(
+            "  Aria  ",
+            Race.Elf,
+            Occupation.Fighter);
+
+        Assert.AreEqual("Aria", player.Name);
+    }
+
+    [TestMethod]
+    public void PlayerConstructor_RejectsBlankName()
+    {
+        Assert.ThrowsException<ArgumentException>(
+            () => new Player(
+                "   ",
+                Race.Human,
+                Occupation.Fighter));
+    }
+
+    [TestMethod]
+    public void RollInitialStats_GeneratesValidValues()
+    {
+        Player player = new Player(
+            "Aria",
+            Race.Human,
+            Occupation.Fighter);
+
+        player.RollInitialStats();
+
+        Assert.IsTrue(player.HasRolledStats);
+        Assert.IsTrue(player.Strength >= 1 && player.Strength <= 24);
+        Assert.IsTrue(player.Agility >= 1 && player.Agility <= 24);
+        Assert.IsTrue(player.Health >= 1 && player.Health <= 27);
+    }
+
+    [TestMethod]
+    public void RollInitialStats_CannotBeCalledTwice()
+    {
+        Player player = new Player(
+            "Aria",
+            Race.Human,
+            Occupation.Fighter);
+
+        player.RollInitialStats();
+
+        Assert.ThrowsException<InvalidOperationException>(
+            () => player.RollInitialStats());
+    }
+
+    [TestMethod]
+    public void DisplayStats_IncludesCharacterInformation()
+    {
+        Player player = new Player(
+            "Aria",
+            Race.Elf,
+            Occupation.Fighter);
+
+        player.RollInitialStats();
+
+        string output = player.DisplayStats();
+
+        StringAssert.Contains(output, "Aria");
+        StringAssert.Contains(output, "Elf");
+        StringAssert.Contains(output, "Fighter");
+        StringAssert.Contains(output, "long sword");
+        StringAssert.Contains(output, "Strength:");
+        StringAssert.Contains(output, "Agility:");
+        StringAssert.Contains(output, "Health:");
+    }
+
+    [TestMethod]
+    public void HalflingStrengthAdjustment_IsNegativeD4()
+    {
+        RaceRules rules = new RaceRules();
+
+        for (int i = 0; i < 50; i++)
+        {
+            int result = rules.RollStrengthAdjustment(Race.Halfling);
+
+            Assert.IsTrue(result >= -4 && result <= -1);
+        }
+    }
+
+    [TestMethod]
+    public void ElfAgilityAdjustment_IsD4()
+    {
+        RaceRules rules = new RaceRules();
+
+        for (int i = 0; i < 50; i++)
+        {
+            int result = rules.RollAgilityAdjustment(Race.Elf);
+
+            Assert.IsTrue(result >= 1 && result <= 4);
+        }
+    }
+
+    [TestMethod]
+    public void HumanAndDwarfAgilityAdjustment_IsZero()
+    {
+        RaceRules rules = new RaceRules();
+
+        Assert.AreEqual(
+            0,
+            rules.RollAgilityAdjustment(Race.Human));
+
+        Assert.AreEqual(
+            0,
+            rules.RollAgilityAdjustment(Race.Dwarf));
+    }
+
+    [TestMethod]
+    public void Die_DefaultConstructorUsesTwentySides()
+    {
+        Die die = new Die();
+
+        Assert.AreEqual(20, die.Sides);
+    }
+
+    [TestMethod]
+    public void DieFourSided_ReturnsValuesBetweenOneAndFour()
+    {
+        Die die = new Die(4);
+
+        for (int i = 0; i < 100; i++)
+        {
+            int result = die.Roll();
+
+            Assert.IsTrue(result >= 1 && result <= 4);
+        }
+    }
+
+    [TestMethod]
+    public void DieTwentySided_ReturnsValuesBetweenOneAndTwenty()
+    {
+        Die die = new Die(20);
+
+        for (int i = 0; i < 100; i++)
+        {
+            int result = die.Roll();
+
+            Assert.IsTrue(result >= 1 && result <= 20);
+        }
+    }
+
+    [TestMethod]
+    public void Die_RejectsZeroSides()
+    {
+        Assert.ThrowsException<ArgumentOutOfRangeException>(
+            () => new Die(0));
+    }
+}
+
+[TestClass]
+public class OccupationTests
+{
+    [DataTestMethod]
+    [DataRow(Occupation.Fighter, "long sword", 12, "-)=====>")]
+    [DataRow(Occupation.Magician, "lightning bolt spell", 12, "zap~~~~~~")]
+    [DataRow(Occupation.Thief, "dagger", 6, "-)==>")]
+    [DataRow(Occupation.Archer, "long bow", 8, "}    -->")]
+    public void GetWeapon_ReturnsCorrectWeapon(
+        Occupation occupation,
+        string expectedType,
+        int expectedDamage,
+        string expectedIcon)
+    {
+        OccupationRules rules = new OccupationRules();
+
+        Weapon weapon = rules.GetWeapon(occupation);
+
+        Assert.AreEqual(expectedType, weapon.type);
+        Assert.AreEqual(expectedDamage, weapon.maxDamage);
+        Assert.AreEqual(expectedIcon, weapon.asciiArt);
+    }
+}
