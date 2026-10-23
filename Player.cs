@@ -7,7 +7,7 @@ public class Player
     public int Stength{get; private set;}
     public int Agility{get; private set;}
 
-    private readonly D20 d20 = new D20();
+    private readonly Die d20 = new Die(20);
     private readonly RaceRules raceRules = new RaceRules();
 
 }

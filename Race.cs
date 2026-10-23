@@ -8,19 +8,9 @@ public enum Race
     Halfling
 }
 
-public class D4
-{
-    public int Sides {get;} = 4;
-
-    public int Roll()
-    {
-        return Random.Shared.Next(1, Sides + 1);
-    }
-}
-
 public class RaceRules
 {
-    private readonly D4 d4 = new D4();
+    private readonly Die d4 = new Die(4);
 
     public int RollStrengthModifier(Race race)
     {
