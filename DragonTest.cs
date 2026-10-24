@@ -50,9 +50,9 @@ public class DragonTest
     public void InitializeStats_WithD20_AssignsValidStatRanges()
     {
         var dragon = new Dragon("Balerion");
-        var d20 = new D20();
+        var die = new Die();
 
-        dragon.InitializeStats(d20);
+        dragon.InitializeStats(die);
 
         Assert.IsTrue(dragon.strength >= 1 && dragon.strength <= 20);
         Assert.IsTrue(dragon.agility >= 1 && dragon.agility <= 20);
