@@ -1,0 +1,240 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+
+[TestClass]
+public class CharacterCreationTests
+{
+    [TestMethod]
+    public void PlayerConstructor_StoresCharacterChoices()
+    {
+        Player player = new Player(
+            "Aria",
+            Race.Elf,
+            Occupation.Fighter);
+
+        Assert.AreEqual("Aria", player.Name);
+        Assert.AreEqual(Race.Elf, player.Race);
+        Assert.AreEqual(Occupation.Fighter, player.Occupation);
+        Assert.AreEqual(Weapon.LongSword, player.Weapon);
+        Assert.IsFalse(player.HasRolledStats);
+    }
+
+    [TestMethod]
+    public void PlayerConstructor_TrimsName()
+    {
+        Player player = new Player(
+            "  Aria  ",
+            Race.Elf,
+            Occupation.Fighter);
+
+        Assert.AreEqual("Aria", player.Name);
+    }
+
+    [TestMethod]
+    public void PlayerConstructor_RejectsBlankName()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new Player(
+                "   ",
+                Race.Human,
+                Occupation.Fighter));
+    }
+
+    [TestMethod]
+    public void RollInitialStats_GeneratesValidValues()
+    {
+        Player player = new Player(
+            "Aria",
+            Race.Human,
+            Occupation.Fighter);
+
+        player.RollInitialStats();
+
+        Assert.IsTrue(player.HasRolledStats);
+        Assert.IsTrue(player.Strength >= 1 && player.Strength <= 24);
+        Assert.IsTrue(player.Agility >= 1 && player.Agility <= 24);
+        Assert.IsTrue(player.Health >= 1 && player.Health <= 27);
+    }
+
+    [TestMethod]
+    public void RollInitialStats_CannotBeCalledTwice()
+    {
+        Player player = new Player(
+            "Aria",
+            Race.Human,
+            Occupation.Fighter);
+
+        player.RollInitialStats();
+
+        Assert.Throws<InvalidOperationException>(
+            () => player.RollInitialStats());
+    }
+
+    [TestMethod]
+    public void DisplayStats_IncludesCharacterInformation()
+    {
+        Player player = new Player(
+            "Aria",
+            Race.Elf,
+            Occupation.Fighter);
+
+        player.RollInitialStats();
+
+        string output = player.DisplayStats();
+
+        StringAssert.Contains(output, "Aria");
+        StringAssert.Contains(output, "Elf");
+        StringAssert.Contains(output, "Fighter");
+        StringAssert.Contains(output, "long sword");
+        StringAssert.Contains(output, "Strength:");
+        StringAssert.Contains(output, "Agility:");
+        StringAssert.Contains(output, "Health:");
+    }
+
+    [TestMethod]
+    public void HalflingStrengthAdjustment_IsNegativeD4()
+    {
+        RaceRules rules = new RaceRules();
+
+        for (int i = 0; i < 50; i++)
+        {
+            int result = rules.RollStrengthModifier(Race.Halfling);
+
+            Assert.IsTrue(result >= -4 && result <= -1);
+        }
+    }
+
+    [TestMethod]
+    public void ElfAgilityAdjustment_IsD4()
+    {
+        RaceRules rules = new RaceRules();
+
+        for (int i = 0; i < 50; i++)
+        {
+            int result = rules.RollAgilityModifier(Race.Elf);
+
+            Assert.IsTrue(result >= 1 && result <= 4);
+        }
+    }
+
+    [TestMethod]
+    public void HumanAndDwarfAgilityAdjustment_IsZero()
+    {
+        RaceRules rules = new RaceRules();
+
+        Assert.AreEqual(
+            0,
+            rules.RollAgilityModifier(Race.Human));
+
+        Assert.AreEqual(
+            0,
+            rules.RollAgilityModifier(Race.Dwarf));
+    }
+
+    // NEW TEST:
+    // Verifies that Elves and Halflings receive an agility modifier
+    // and that the final agility score is consistent with that modifier.
+    [TestMethod]
+    [DataRow(Race.Elf)]
+    [DataRow(Race.Halfling)]
+    public void RollInitialStats_ElfAndHalflingApplyAgilityModifier(
+        Race race)
+    {
+        for (int i = 0; i < 50; i++)
+        {
+            Player player = new Player(
+                "Aria",
+                race,
+                Occupation.Fighter);
+
+            player.RollInitialStats();
+
+            // The agility modifier must be between 1 and 4.
+            Assert.IsTrue(
+                player.AgilityModifier >= 1 &&
+                player.AgilityModifier <= 4,
+                "Agility modifier should be between 1 and 4.");
+
+            // Both races receive a positive agility adjustment.
+            Assert.IsTrue(
+                player.Agility >= 2 &&
+                player.Agility <= 24,
+                "Agility should include the racial adjustment.");
+
+            // The score minus its modifier should correspond
+            // to a valid base d20 roll.
+            int baseAgility =
+                player.Agility - player.AgilityModifier;
+
+            Assert.IsTrue(
+                baseAgility >= 1 && baseAgility <= 20,
+                "Base agility should be between 1 and 20.");
+        }
+    }
+
+    [TestMethod]
+    public void Die_DefaultConstructorUsesTwentySides()
+    {
+        Die die = new Die();
+
+        Assert.AreEqual(20, die.Sides);
+    }
+
+    [TestMethod]
+    public void DieFourSided_ReturnsValuesBetweenOneAndFour()
+    {
+        Die die = new Die(4);
+
+        for (int i = 0; i < 100; i++)
+        {
+            int result = die.Roll();
+
+            Assert.IsTrue(result >= 1 && result <= 4);
+        }
+    }
+
+    [TestMethod]
+    public void DieTwentySided_ReturnsValuesBetweenOneAndTwenty()
+    {
+        Die die = new Die(20);
+
+        for (int i = 0; i < 100; i++)
+        {
+            int result = die.Roll();
+
+            Assert.IsTrue(result >= 1 && result <= 20);
+        }
+    }
+
+    [TestMethod]
+    public void Die_RejectsZeroSides()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new Die(0));
+    }
+}
+
+[TestClass]
+public class OccupationTests
+{
+    [TestMethod]
+    [DataRow(Occupation.Fighter, "long sword", 12, "-)=====>")]
+    [DataRow(Occupation.Magician, "lightning bolt spell", 12, "zap~~~~~~")]
+    [DataRow(Occupation.Thief, "dagger", 6, "-)==>")]
+    [DataRow(Occupation.Archer, "long bow", 8, "}    -->")]
+    public void GetWeapon_ReturnsCorrectWeapon(
+        Occupation occupation,
+        string expectedType,
+        int expectedDamage,
+        string expectedIcon)
+    {
+        OccupationRules rules = new OccupationRules();
+
+        Weapon weapon = rules.GetWeapon(occupation);
+
+        Assert.AreEqual(expectedType, weapon.type);
+        Assert.AreEqual(expectedDamage, weapon.maxDamage);
+        Assert.AreEqual(expectedIcon, weapon.asciiArt);
+    }
+}
+
