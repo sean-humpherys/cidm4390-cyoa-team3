@@ -4,7 +4,7 @@ public enum Occupation
 {
     Fighter,
     Magician,
-    Theif,
+    Thief,
     Archer
 }
 
@@ -18,7 +18,7 @@ public class OccupationRules
                 return Weapon.LongSword;
             case Occupation.Magician:
                 return Weapon.LightningBoltSpell;
-            case Occupation.Theif:
+            case Occupation.Thief:
                 return Weapon.Dagger;
             case Occupation.Archer:
                 return Weapon.LongBow;

@@ -131,6 +131,47 @@ public class CharacterCreationTests
             rules.RollAgilityAdjustment(Race.Dwarf));
     }
 
+    // NEW TEST:
+    // Verifies that Elves and Halflings receive an agility modifier
+    // and that the final agility score is consistent with that modifier.
+    [DataTestMethod]
+    [DataRow(Race.Elf)]
+    [DataRow(Race.Halfling)]
+    public void RollInitialStats_ElfAndHalflingApplyAgilityModifier(
+        Race race)
+    {
+        for (int i = 0; i < 50; i++)
+        {
+            Player player = new Player(
+                "Aria",
+                race,
+                Occupation.Fighter);
+
+            player.RollInitialStats();
+
+            // The agility modifier must be between 1 and 4.
+            Assert.IsTrue(
+                player.AgilityModifier >= 1 &&
+                player.AgilityModifier <= 4,
+                "Agility modifier should be between 1 and 4.");
+
+            // Both races receive a positive agility adjustment.
+            Assert.IsTrue(
+                player.Agility >= 2 &&
+                player.Agility <= 24,
+                "Agility should include the racial adjustment.");
+
+            // The score minus its modifier should correspond
+            // to a valid base d20 roll.
+            int baseAgility =
+                player.Agility - player.AgilityModifier;
+
+            Assert.IsTrue(
+                baseAgility >= 1 && baseAgility <= 20,
+                "Base agility should be between 1 and 20.");
+        }
+    }
+
     [TestMethod]
     public void Die_DefaultConstructorUsesTwentySides()
     {

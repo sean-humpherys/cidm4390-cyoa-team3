@@ -29,7 +29,7 @@ public class Dragon
         this.Messages = messages;
     }
 
-    public void InitializeStats(D20 die)
+    public void InitializeStats(Die die)
     {
         ArgumentNullException.ThrowIfNull(die);
 

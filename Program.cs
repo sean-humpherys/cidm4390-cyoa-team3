@@ -16,11 +16,11 @@ do
 while (string.IsNullOrWhiteSpace(name));
 
 Race race = AskForEnum<Race>(
-    "Choose your race: Elf, Human, Dwarf, Halflinf"
+    "Choose your race: Elf, Human, Dwarf, Halfling"
 );
 
 Occupation occupation = AskForEnum<Occupation>(
-    "Choose your occupation: Fighter, Magician, Theif, Archer"
+    "Choose your occupation: Fighter, Magician, Thief, Archer"
 );
 
 Player player = new Player(name, race, occupation);
