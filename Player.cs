@@ -74,7 +74,6 @@ public class Player
         );
 
         // Roll agility and apply the racial adjustment.
-        // Roll agility and apply the racial adjustment.
         int baseAgility = d20.Roll();
 
         AgilityModifier =
