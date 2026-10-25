@@ -1,5 +1,5 @@
-using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
 [TestClass]
 public class CharacterCreationTests
@@ -33,7 +33,7 @@ public class CharacterCreationTests
     [TestMethod]
     public void PlayerConstructor_RejectsBlankName()
     {
-        Assert.ThrowsException<ArgumentException>(
+        Assert.Throws<ArgumentException>(
             () => new Player(
                 "   ",
                 Race.Human,
@@ -66,7 +66,7 @@ public class CharacterCreationTests
 
         player.RollInitialStats();
 
-        Assert.ThrowsException<InvalidOperationException>(
+        Assert.Throws<InvalidOperationException>(
             () => player.RollInitialStats());
     }
 
@@ -98,7 +98,7 @@ public class CharacterCreationTests
 
         for (int i = 0; i < 50; i++)
         {
-            int result = rules.RollStrengthAdjustment(Race.Halfling);
+            int result = rules.RollStrengthModifier(Race.Halfling);
 
             Assert.IsTrue(result >= -4 && result <= -1);
         }
@@ -111,7 +111,7 @@ public class CharacterCreationTests
 
         for (int i = 0; i < 50; i++)
         {
-            int result = rules.RollAgilityAdjustment(Race.Elf);
+            int result = rules.RollAgilityModifier(Race.Elf);
 
             Assert.IsTrue(result >= 1 && result <= 4);
         }
@@ -124,17 +124,17 @@ public class CharacterCreationTests
 
         Assert.AreEqual(
             0,
-            rules.RollAgilityAdjustment(Race.Human));
+            rules.RollAgilityModifier(Race.Human));
 
         Assert.AreEqual(
             0,
-            rules.RollAgilityAdjustment(Race.Dwarf));
+            rules.RollAgilityModifier(Race.Dwarf));
     }
 
     // NEW TEST:
     // Verifies that Elves and Halflings receive an agility modifier
     // and that the final agility score is consistent with that modifier.
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(Race.Elf)]
     [DataRow(Race.Halfling)]
     public void RollInitialStats_ElfAndHalflingApplyAgilityModifier(
@@ -209,7 +209,7 @@ public class CharacterCreationTests
     [TestMethod]
     public void Die_RejectsZeroSides()
     {
-        Assert.ThrowsException<ArgumentOutOfRangeException>(
+        Assert.Throws<ArgumentOutOfRangeException>(
             () => new Die(0));
     }
 }
@@ -217,7 +217,7 @@ public class CharacterCreationTests
 [TestClass]
 public class OccupationTests
 {
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(Occupation.Fighter, "long sword", 12, "-)=====>")]
     [DataRow(Occupation.Magician, "lightning bolt spell", 12, "zap~~~~~~")]
     [DataRow(Occupation.Thief, "dagger", 6, "-)==>")]
