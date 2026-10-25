@@ -4,6 +4,8 @@ using System;
 [TestClass]
 public class CharacterCreationTests
 {
+    //Verifies that the Player constructor correctly stores character info(name, race, occupation, etc)
+    //Also checks that stats have not been rolled.
     [TestMethod]
     public void PlayerConstructor_StoresCharacterChoices()
     {
@@ -19,6 +21,7 @@ public class CharacterCreationTests
         Assert.IsFalse(player.HasRolledStats);
     }
 
+    //Verifies formatting for characrter name.
     [TestMethod]
     public void PlayerConstructor_TrimsName()
     {
@@ -30,6 +33,7 @@ public class CharacterCreationTests
         Assert.AreEqual("Aria", player.Name);
     }
 
+    //Verifies if a player does not add a name it throws an Exception.
     [TestMethod]
     public void PlayerConstructor_RejectsBlankName()
     {
@@ -40,6 +44,7 @@ public class CharacterCreationTests
                 Occupation.Fighter));
     }
 
+    //Verifies that initial rolled stats are set. 
     [TestMethod]
     public void RollInitialStats_GeneratesValidValues()
     {
@@ -50,12 +55,14 @@ public class CharacterCreationTests
 
         player.RollInitialStats();
 
+        //Flags and generates values within expected ranges
         Assert.IsTrue(player.HasRolledStats);
         Assert.IsTrue(player.Strength >= 1 && player.Strength <= 24);
         Assert.IsTrue(player.Agility >= 1 && player.Agility <= 24);
         Assert.IsTrue(player.Health >= 1 && player.Health <= 27);
     }
 
+    //Does not allow for initial stats to be rolled again.
     [TestMethod]
     public void RollInitialStats_CannotBeCalledTwice()
     {
@@ -66,10 +73,12 @@ public class CharacterCreationTests
 
         player.RollInitialStats();
 
+        //Throws an exception if roll is attempted again.
         Assert.Throws<InvalidOperationException>(
             () => player.RollInitialStats());
     }
 
+    //Verifies that all of character's stats are displayed. 
     [TestMethod]
     public void DisplayStats_IncludesCharacterInformation()
     {
@@ -91,6 +100,7 @@ public class CharacterCreationTests
         StringAssert.Contains(output, "Health:");
     }
 
+    //Verifies the specific modifier for Halfling is properly applied.
     [TestMethod]
     public void HalflingStrengthAdjustment_IsNegativeD4()
     {
@@ -104,6 +114,7 @@ public class CharacterCreationTests
         }
     }
 
+    //Verified modifier for Elf is applied.
     [TestMethod]
     public void ElfAgilityAdjustment_IsD4()
     {
@@ -117,6 +128,7 @@ public class CharacterCreationTests
         }
     }
 
+    //Verifies no modifier is applied to the correct races.
     [TestMethod]
     public void HumanAndDwarfAgilityAdjustment_IsZero()
     {
@@ -131,7 +143,6 @@ public class CharacterCreationTests
             rules.RollAgilityModifier(Race.Dwarf));
     }
 
-    // NEW TEST:
     // Verifies that Elves and Halflings receive an agility modifier
     // and that the final agility score is consistent with that modifier.
     [TestMethod]
@@ -172,6 +183,7 @@ public class CharacterCreationTests
         }
     }
 
+    //Verifies Die without an argument defaults to 20.
     [TestMethod]
     public void Die_DefaultConstructorUsesTwentySides()
     {
@@ -180,6 +192,7 @@ public class CharacterCreationTests
         Assert.AreEqual(20, die.Sides);
     }
 
+    //Ensures that values rolled between 1-4 stay between that range.
     [TestMethod]
     public void DieFourSided_ReturnsValuesBetweenOneAndFour()
     {
@@ -193,6 +206,7 @@ public class CharacterCreationTests
         }
     }
 
+    //Similar to before test but with values 1-20
     [TestMethod]
     public void DieTwentySided_ReturnsValuesBetweenOneAndTwenty()
     {
@@ -206,6 +220,7 @@ public class CharacterCreationTests
         }
     }
 
+    //Ensures Die cannot have 0 sides.
     [TestMethod]
     public void Die_RejectsZeroSides()
     {
@@ -214,9 +229,13 @@ public class CharacterCreationTests
     }
 }
 
+//Verifies each occupation recieves the correct information
 [TestClass]
 public class OccupationTests
 {
+    // Tests the weapon assigned to each occupation.
+    // Each DataRow supplies a different occupation and its
+    // expected weapon properties
     [TestMethod]
     [DataRow(Occupation.Fighter, "long sword", 12, "-)=====>")]
     [DataRow(Occupation.Magician, "lightning bolt spell", 12, "zap~~~~~~")]
@@ -230,8 +249,10 @@ public class OccupationTests
     {
         OccupationRules rules = new OccupationRules();
 
+        // Retrieve the weapon associated with the selected occupation.
         Weapon weapon = rules.GetWeapon(occupation);
 
+        //Verifies weapon types match the expected values.
         Assert.AreEqual(expectedType, weapon.type);
         Assert.AreEqual(expectedDamage, weapon.maxDamage);
         Assert.AreEqual(expectedIcon, weapon.asciiArt);
