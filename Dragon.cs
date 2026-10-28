@@ -24,9 +24,14 @@ public class Dragon
     // Initializes Dragon with default weapon ("claws", 12, "##") and optional Messages service.
     public Dragon(string name, Messages? messages = null)
     {
-        this.name = name;
-        this.weapon = new Weapon("claws", 12, "##");
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Dragon name cannot be null or empty.", nameof(name));
+        }
+
+        this.name = name.Trim();
         this.Messages = messages;
+        this.weapon = new Weapon("claws", 12, "##");
     }
 
     public void InitializeStats(Die die)
@@ -50,13 +55,39 @@ public class Dragon
     
     public string MissedMeTaunt()
     {
-        if (Messages != null)
+        if (Messages == null)
         {
-            int selectedId = _missedTauntIds[Random.Shared.Next(_missedTauntIds.Length)];
-            return Messages.GetMessage(selectedId);
+            return "...";
         }
 
-        return "Missed me, breath of a gnat!";
+        // Shuffle the IDs so attempts remain random while allowing fallbacks
+        int[] shuffledIds = _missedTauntIds.OrderBy(_ => Random.Shared.Next()).ToArray();
+
+        foreach (int id in shuffledIds)
+        {
+            try
+            {
+                string message = Messages.GetMessage(id);
+
+                if (!string.IsNullOrWhiteSpace(message) && !message.StartsWith("["))
+                {
+                    return message;
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                // Key not found in current language dictionary; retry next available ID
+                continue;
+            }
+            catch (Exception)
+            {
+                // Any read failure or dictionary issue; attempt next ID
+                continue;
+            }
+        }
+
+        // Language-neutral fallback if all IDs fail or dictionary is empty
+        return "...";
     }
 
     // Overload allowing race substitution if the dictionary string contains {race}.
@@ -64,21 +95,42 @@ public class Dragon
     public string MissedMeTaunt(string race)
     {
         string raw = MissedMeTaunt();
-        return raw.Replace("{race}", race);
+        return string.IsNullOrEmpty(raw) ? raw : raw.Replace("{race}", race);
     }
-
-    // Returns a hit reaction taunt by delegating to Messages.GetMessage(),
-    // or returns a default fallback if Messages is not configured.
-    
+    //Resolves a localized reaction when the dragon is hit by the player.
+    // Retries alternate IDs if a key is missing; avoids hardcoded English fallbacks.  
     public string WasHitTaunt()
     {
-        if (Messages != null)
+        if (Messages == null)
         {
-            int selectedId = _wasHitTauntIds[Random.Shared.Next(_wasHitTauntIds.Length)];
-            return Messages.GetMessage(selectedId);
+            return "!";
         }
 
-        return "Ow! That actually stung a bit!";
+        int[] shuffledIds = _wasHitTauntIds.OrderBy(_ => Random.Shared.Next()).ToArray();
+
+        foreach (int id in shuffledIds)
+        {
+            try
+            {
+                string message = Messages.GetMessage(id);
+
+                if (!string.IsNullOrWhiteSpace(message) && !message.StartsWith("["))
+                {
+                    return message;
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                continue;
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+        }
+
+        // Language-neutral fallback if all hit IDs fail
+        return "!";
     }
 
     public string DisplayStats()

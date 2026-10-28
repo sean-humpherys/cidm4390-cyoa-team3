@@ -1,36 +1,52 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
 public class DragonTest
 {
-    private const string TestDictionaryPath = "DragonTauntsSample.txt";
+    private const string FullTestDictionaryPath = "DragonTauntsFullSample.txt";
+    private const string PartialTestDictionaryPath = "DragonTauntsPartialSample.txt";
 
     [TestInitialize]
     public void Setup()
     {
-        // Write the sample test dictionary lines needed for testing
-        File.WriteAllLines(TestDictionaryPath, new[]
+        // Full dictionary containing all IDs: 101-104 and 201-204
+        string[] fullLines = new string[]
         {
-            "101=Missed me, breath of a gnat!",
-            "102=Is that all you've got? I've seen kittens with more fire in their paws!",
-            "103=Try harder, {race}! You're making me yawn!",
-            "104=Maybe if you squinted harder, you'd actually hit something!",
-            "201=Ow! That actually stung a bit!",
-            "202=Impressive! You might actually be worth toasting...",
-            "203=That...was unexpected. But I assure you, it won't happen again.",
-            "204=Well, I'll be! You have more bite than I thought!"
-        });
+            "101=You swing like a sleepy goblin!",
+            "102=A gust of wind poses more danger than you!",
+            "103=Try harder, {race}! You are testing my patience!",
+            "104=Ha! Not even close, little {race}!",
+            "201=Roar! That actually stung!",
+            "202=Insolent mortal, you will pay for that strike!",
+            "203=A lucky blow! It will be your last!",
+            "204=My scales! You dare chip my armor?!"
+        };
+        File.WriteAllLines(FullTestDictionaryPath, fullLines);
+
+        // Partial dictionary missing IDs 101, 102, 201, 202 to verify retry logic
+        string[] partialLines = new string[]
+        {
+            "103=Try harder, {race}! You are testing my patience!",
+            "104=Ha! Not even close, little {race}!",
+            "203=A lucky blow! It will be your last!",
+            "204=My scales! You dare chip my armor?!"
+        };
+        File.WriteAllLines(PartialTestDictionaryPath, partialLines);
     }
 
     [TestCleanup]
     public void Cleanup()
     {
-        // Remove the temporary file after tests finish
-        if (File.Exists(TestDictionaryPath))
+        if (File.Exists(FullTestDictionaryPath))
         {
-            File.Delete(TestDictionaryPath);
+            File.Delete(FullTestDictionaryPath);
+        }
+
+        if (File.Exists(PartialTestDictionaryPath))
+        {
+            File.Delete(PartialTestDictionaryPath);
         }
     }
 
@@ -47,7 +63,49 @@ public class DragonTest
     }
 
     [TestMethod]
-    public void InitializeStats_WithD20_AssignsValidStatRanges()
+    public void Constructor_ThrowsException_WhenNameIsEmpty()
+    {
+        try
+        {
+            _ = new Dragon("");
+            Assert.Fail("Expected ArgumentException was not thrown when name is empty.");
+        }
+        catch (ArgumentException)
+        {
+            // Successfully caught expected exception
+        }
+    }
+
+    [TestMethod]
+    public void Constructor_ThrowsException_WhenNameIsWhitespace()
+    {
+        try
+        {
+            _ = new Dragon("   ");
+            Assert.Fail("Expected ArgumentException was not thrown when name is whitespace.");
+        }
+        catch (ArgumentException)
+        {
+            // Successfully caught expected exception
+        }
+    }
+
+    [TestMethod]
+    public void Constructor_ThrowsException_WhenNameIsNull()
+    {
+        try
+        {
+            _ = new Dragon(null!);
+            Assert.Fail("Expected ArgumentException was not thrown when name is null.");
+        }
+        catch (ArgumentException)
+        {
+            // Successfully caught expected exception
+        }
+    }
+
+    [TestMethod]
+    public void InitializeStats_WithDie_AssignsValidStatRanges()
     {
         var dragon = new Dragon("Balerion");
         var die = new Die();
@@ -60,25 +118,24 @@ public class DragonTest
     }
 
     [TestMethod]
-    public void InitializeStats_ThrowsWhenD20IsNull()
+    public void InitializeStats_ThrowsWhenDieIsNull()
     {
-        var dragon = new Dragon("Balerion");
-
         try
         {
+            var dragon = new Dragon("Balerion");
             dragon.InitializeStats(null!);
-            Assert.Fail("Expected ArgumentNullException was not thrown.");
+            Assert.Fail("Expected ArgumentNullException was not thrown when die is null.");
         }
         catch (ArgumentNullException)
         {
-            // Expected exception caught
+            // Successfully caught expected exception
         }
     }
 
     [TestMethod]
     public void InitializeStats_Overload_AssignsExactValues()
     {
-        var dragon = new Dragon("Balerion");
+        var dragon = new Dragon("Vermithrax");
 
         dragon.InitializeStats(18, 14, 20);
 
@@ -91,7 +148,7 @@ public class DragonTest
     public void MissedMeTaunt_UsesMessagesDictionaryAndReplacesRace()
     {
         var messages = new Messages();
-        messages.ReadDictionary(TestDictionaryPath);
+        messages.ReadDictionary(FullTestDictionaryPath);
 
         var dragon = new Dragon("Ignis", messages);
         string playerRace = "Elf";
@@ -108,7 +165,7 @@ public class DragonTest
     public void WasHitTaunt_UsesMessagesDictionary()
     {
         var messages = new Messages();
-        messages.ReadDictionary(TestDictionaryPath);
+        messages.ReadDictionary(FullTestDictionaryPath);
 
         var dragon = new Dragon("Ignis", messages);
 
@@ -116,25 +173,70 @@ public class DragonTest
         {
             string taunt = dragon.WasHitTaunt();
             Assert.IsFalse(string.IsNullOrWhiteSpace(taunt));
+            Assert.AreNotEqual("!", taunt);
         }
+    }
+
+    [TestMethod]
+    public void Taunts_WithPartialDictionary_SuccessfullyRetriesAndResolvesAvailableKey()
+    {
+        var messages = new Messages();
+        messages.ReadDictionary(PartialTestDictionaryPath);
+
+        var dragon = new Dragon("Ancalagon", messages);
+        string race = "Dwarf";
+
+        for (int i = 0; i < 20; i++)
+        {
+            string missedTaunt = dragon.MissedMeTaunt(race);
+            string hitTaunt = dragon.WasHitTaunt();
+
+            Assert.IsFalse(string.IsNullOrWhiteSpace(missedTaunt));
+            Assert.AreNotEqual("...", missedTaunt);
+            Assert.IsFalse(missedTaunt.Contains("{race}"));
+
+            Assert.IsFalse(string.IsNullOrWhiteSpace(hitTaunt));
+            Assert.AreNotEqual("!", hitTaunt);
+        }
+    }
+
+    [TestMethod]
+    public void Taunts_WhenMessagesIsNull_ReturnsLanguageNeutralFallbacks()
+    {
+        var dragon = new Dragon("Fafnir", null);
+
+        string missedTaunt = dragon.MissedMeTaunt("Human");
+        string hitTaunt = dragon.WasHitTaunt();
+
+        Assert.AreEqual("...", missedTaunt);
+        Assert.AreEqual("!", hitTaunt);
+    }
+
+    [TestMethod]
+    public void Taunts_WhenDictionaryEmpty_CatchesAllExceptionsAndReturnsLanguageNeutralFallbacks()
+    {
+        var emptyMessages = new Messages();
+        var dragon = new Dragon("Glaurung", emptyMessages);
+
+        string missedTaunt = dragon.MissedMeTaunt("Halfling");
+        string hitTaunt = dragon.WasHitTaunt();
+
+        Assert.AreEqual("...", missedTaunt);
+        Assert.AreEqual("!", hitTaunt);
     }
 
     [TestMethod]
     public void DisplayStats_IncludesAllStatsAndWeaponName()
     {
-        var dragon = new Dragon("Fafnir")
-        {
-            strength = 15,
-            agility = 12,
-            health = 25
-        };
+        var dragon = new Dragon("Draco");
+        dragon.InitializeStats(15, 12, 19);
 
-        string output = dragon.DisplayStats();
+        string display = dragon.DisplayStats();
 
-        StringAssert.Contains(output, "Fafnir");
-        StringAssert.Contains(output, "15");
-        StringAssert.Contains(output, "12");
-        StringAssert.Contains(output, "25");
-        StringAssert.Contains(output, "claws");
+        StringAssert.Contains(display, "Draco");
+        StringAssert.Contains(display, "15");
+        StringAssert.Contains(display, "12");
+        StringAssert.Contains(display, "19");
+        StringAssert.Contains(display, "claws");
     }
 }
