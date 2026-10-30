@@ -5,35 +5,42 @@ using System.IO;
 [TestClass]
 public class DragonTest
 {
-    private const string FullTestDictionaryPath = "DragonTauntsFullSample.txt";
-    private const string PartialTestDictionaryPath = "DragonTauntsPartialSample.txt";
+    private const string FullTestDictionaryPath = "DragonTauntsFullSample.json";
+    private const string PartialTestDictionaryPath = "DragonTauntsPartialSample.json";
 
     [TestInitialize]
     public void Setup()
     {
-        // Full dictionary containing all IDs: 101-104 and 201-204
-        string[] fullLines = new string[]
-        {
-            "101=You swing like a sleepy goblin!",
-            "102=A gust of wind poses more danger than you!",
-            "103=Try harder, {race}! You are testing my patience!",
-            "104=Ha! Not even close, little {race}!",
-            "201=Roar! That actually stung!",
-            "202=Insolent mortal, you will pay for that strike!",
-            "203=A lucky blow! It will be your last!",
-            "204=My scales! You dare chip my armor?!"
-        };
-        File.WriteAllLines(FullTestDictionaryPath, fullLines);
+        // Full file containing both dragon messages
+        string fullJson = """
+         {
+              "dragon_taunt": { "en": [
+                "You swing like a sleepy goblin!",
+                "A gust of wind poses more danger than you!",
+                "Try harder, {characterRace}! You are testing my patience!",
+                "Ha! Not even close, little {characterRace}!"
+              ] },
+              "dragon_defeated_false": { "en": [
+                "Roar! That actually stung!",
+                "Insolent mortal, you will pay for that strike!",
+                "A lucky blow! It will be your last!",
+                "My scales! You dare chip my armor?!"
+              ] }
+            }
+        """;
+        
+            File.WriteAllText(FullTestDictionaryPath, fullJson);
 
-        // Partial dictionary missing IDs 101, 102, 201, 202 to verify retry logic
-        string[] partialLines = new string[]
+        // Partial file with only dragon_taunt
+        string partialJson = """
         {
-            "103=Try harder, {race}! You are testing my patience!",
-            "104=Ha! Not even close, little {race}!",
-            "203=A lucky blow! It will be your last!",
-            "204=My scales! You dare chip my armor?!"
-        };
-        File.WriteAllLines(PartialTestDictionaryPath, partialLines);
+              "dragon_taunt": { "en": [
+                "Try harder, {characterRace}! You are testing my patience!",
+                "Ha! Not even close, little {characterRace}!"
+              ] }
+            }
+        """;
+        File.WriteAllText(PartialTestDictionaryPath, partialJson);
     }
 
     [TestCleanup]
@@ -148,7 +155,7 @@ public class DragonTest
     public void MissedMeTaunt_UsesMessagesDictionaryAndReplacesRace()
     {
         var messages = new Messages();
-        messages.ReadDictionary(FullTestDictionaryPath);
+        messages.ReadDictionary(FullTestDictionaryPath, "en");
 
         var dragon = new Dragon("Ignis", messages);
         string playerRace = "Elf";
@@ -157,7 +164,7 @@ public class DragonTest
         {
             string taunt = dragon.MissedMeTaunt(playerRace);
             Assert.IsFalse(string.IsNullOrWhiteSpace(taunt));
-            Assert.IsFalse(taunt.Contains("{race}"), "Placeholder {race} was not replaced.");
+            Assert.IsFalse(taunt.Contains("{characterRace}"), "Placeholder {characterRace} was not replaced.");
         }
     }
 
@@ -165,7 +172,7 @@ public class DragonTest
     public void WasHitTaunt_UsesMessagesDictionary()
     {
         var messages = new Messages();
-        messages.ReadDictionary(FullTestDictionaryPath);
+        messages.ReadDictionary(FullTestDictionaryPath, "en");
 
         var dragon = new Dragon("Ignis", messages);
 
@@ -178,10 +185,10 @@ public class DragonTest
     }
 
     [TestMethod]
-    public void Taunts_WithPartialDictionary_SuccessfullyRetriesAndResolvesAvailableKey()
+    public void Taunts_WithPartialDictionary_ReturnsFallbackForTheMissingMessage()
     {
         var messages = new Messages();
-        messages.ReadDictionary(PartialTestDictionaryPath);
+        messages.ReadDictionary(PartialTestDictionaryPath, "en");
 
         var dragon = new Dragon("Ancalagon", messages);
         string race = "Dwarf";
@@ -191,12 +198,15 @@ public class DragonTest
             string missedTaunt = dragon.MissedMeTaunt(race);
             string hitTaunt = dragon.WasHitTaunt();
 
+            // dragon_taunt exists, so a real taunt comes back
             Assert.IsFalse(string.IsNullOrWhiteSpace(missedTaunt));
             Assert.AreNotEqual("...", missedTaunt);
-            Assert.IsFalse(missedTaunt.Contains("{race}"));
+            Assert.IsFalse(missedTaunt.Contains("{characterRace}"));
 
-            Assert.IsFalse(string.IsNullOrWhiteSpace(hitTaunt));
-            Assert.AreNotEqual("!", hitTaunt);
+            // dragon_defeated_false is missing, so the fallback comes back 
+            Assert.AreEqual("!", hitTaunt);
+
+            
         }
     }
 
