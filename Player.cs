@@ -95,6 +95,20 @@ public class Player
         HasRolledStats = true;
     }
 
+    // Returns a placeholder taunt when an opponent misses the player.
+    // Edit when Messages.cs is updated
+    public string MissedMeTaunt()
+    {
+        return "[PLAYER MISSED-ME TAUNT PLACEHOLDER]";
+    }
+
+    // Returns a placeholder taunt when the player gets hit.
+    // Edit when Messages.cs is updated
+    public string WasHitTaunt()
+    {
+        return "[PLAYER WAS-HIT TAUNT PLACEHOLDER]";
+    }
+
     public string DisplayStats()
     {
         if (!HasRolledStats)
