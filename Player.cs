@@ -61,6 +61,8 @@ public class Player
     public int StrengthModifier { get; private set; }
     public int AgilityModifier { get; private set; }
 
+    // Defaults to the Fighter's weapon because the default Occupation is
+    // Fighter (the first enum value). It is replaced whenever Occupation is set.
     public Weapon Weapon { get; private set; } = Weapon.LongSword;
 
     // Tracks which stats have been rolled so far.
@@ -74,6 +76,9 @@ public class Player
     // Positive for Human, Elf, and Dwarf; negative for Halfling.
     private int strengthAdjustment;
 
+    // Localized text (Dialogue.json) used for the taunts. Optional.
+    public Messages? Messages { get; set; }
+
     private readonly Die d20 = new Die(20);
     private readonly RaceRules raceRules = new RaceRules();
     private readonly OccupationRules occupationRules =
@@ -85,11 +90,12 @@ public class Player
     {
     }
 
-    public Player(string name, Race race, Occupation occupation)
+    public Player(string name, Race race, Occupation occupation, Messages? messages = null)
     {
         Name = name;
         Race = race;
         Occupation = occupation;
+        Messages = messages;
     }
 
     // Step 1: Randomly select 1-20 for strength, then apply the racial
@@ -157,18 +163,45 @@ public class Player
         HasRolledHealth = true;
     }
 
-    // Returns a placeholder taunt when an opponent misses the player.
-    // Edit when Messages.cs is updated
+    // Random g-rated taunt ("player_taunt" in Dialogue.json) used when an
+    // opponent's attack fails against the player.
+    // Returns a language-neutral fallback if Messages is not configured.
     public string MissedMeTaunt()
     {
-        return "[PLAYER MISSED-ME TAUNT PLACEHOLDER]";
+        if (Messages == null)
+        {
+            return "...";
+        }
+
+        string message = Messages.GetMessage("player_taunt");
+
+        // GetMessage returns a [Missing message ...] placeholder when the name is not found
+        if (string.IsNullOrWhiteSpace(message) || message.StartsWith("["))
+        {
+            return "...";
+        }
+
+        return message;
     }
 
-    // Returns a placeholder taunt when the player gets hit.
-    // Edit when Messages.cs is updated
+    // Random sarcastic reply ("player_defeated_false" in Dialogue.json) used
+    // when the player is hit but still alive.
+    // Returns a language-neutral fallback if Messages is not configured.
     public string WasHitTaunt()
     {
-        return "[PLAYER WAS-HIT TAUNT PLACEHOLDER]";
+        if (Messages == null)
+        {
+            return "!";
+        }
+
+        string message = Messages.GetMessage("player_defeated_false");
+
+        if (string.IsNullOrWhiteSpace(message) || message.StartsWith("["))
+        {
+            return "!";
+        }
+
+        return message;
     }
 
     // Character summary: exactly the eight items in the appendix.

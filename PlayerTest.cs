@@ -529,3 +529,50 @@ public class OccupationTests
         Assert.AreEqual(expectedIcon, weapon.asciiArt);
     }
 }
+
+//Verifies the player's taunts come from Dialogue.json (through Messages)
+[TestClass]
+public class PlayerTauntTests
+{
+    [TestMethod]
+    public void Taunts_WithoutMessages_ReturnLanguageNeutralFallbacks()
+    {
+        Player player = new Player("Aria", Race.Elf, Occupation.Fighter);
+
+        Assert.AreEqual("...", player.MissedMeTaunt());
+        Assert.AreEqual("!", player.WasHitTaunt());
+    }
+
+    [TestMethod]
+    public void Taunts_WithMessages_UseDialogueEntries()
+    {
+        Messages messages = MessagesTestHelper.Create(
+            ("player_taunt", "TAUNT-TEXT"),
+            ("player_defeated_false", "SARCASM-TEXT"));
+
+        Player player = new Player("Aria", Race.Elf, Occupation.Fighter, messages);
+
+        Assert.AreEqual("TAUNT-TEXT", player.MissedMeTaunt());
+        Assert.AreEqual("SARCASM-TEXT", player.WasHitTaunt());
+    }
+
+    [TestMethod]
+    public void Taunts_MissingKeys_ReturnFallbacksInsteadOfPlaceholderText()
+    {
+        Messages messages = MessagesTestHelper.Create(("unrelated_key", "x"));
+
+        Player player = new Player("Aria", Race.Elf, Occupation.Fighter, messages);
+
+        Assert.AreEqual("...", player.MissedMeTaunt());
+        Assert.AreEqual("!", player.WasHitTaunt());
+    }
+
+    [TestMethod]
+    public void Taunts_CanBeSetAfterConstruction()
+    {
+        Player player = new Player();
+        player.Messages = MessagesTestHelper.Create(("player_taunt", "LATE-TAUNT"));
+
+        Assert.AreEqual("LATE-TAUNT", player.MissedMeTaunt());
+    }
+}

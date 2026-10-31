@@ -1,3 +1,7 @@
+// Combat.cs
+// No namespace needed: this project uses top-level statements,
+// so every .cs file in the root folder can see the other classes.
+
 using System;
 
 public class Combat
@@ -6,14 +10,19 @@ public class Combat
     private Player player { get; set; }
     private Dragon dragon { get; set; }
 
+    // Localized text (Dialogue.json). If none is passed in, the dragon's
+    // Messages object is used. If neither exists, English fallback text is shown.
+    private Messages? messages { get; set; }
+
     // Both attack sequences use a 20-sided die
     private const int DieSides = 20;
 
     // ---- Constructor ----
-    public Combat(Player player, Dragon dragon)
+    public Combat(Player player, Dragon dragon, Messages? messages = null)
     {
         this.player = player;
         this.dragon = dragon;
+        this.messages = messages ?? dragon.Messages;
     }
 
     // =====================================================================
@@ -30,8 +39,12 @@ public class Combat
         {
             // ---------- Player's turn ----------
             Console.WriteLine();
-            Console.WriteLine($"You prepare yourself to attack the dragon with your weapon. " +
-                              $"As a {player.Occupation} you withdraw your {player.Weapon.type}. You attack.");
+            Console.WriteLine(GetText(
+                "attack_intro",
+                "You prepare yourself to attack the dragon with your weapon. " +
+                "As a {characterOccupation} you withdraw your {characterWeapon}. You attack.",
+                ("{characterOccupation}", player.Occupation.ToString()),
+                ("{characterWeapon}", player.Weapon.type)));
 
             DisplayWeaponImage();
 
@@ -40,14 +53,22 @@ public class Combat
             if (attackRoll <= player.Strength)
             {
                 // Player's attack hits
-                Console.WriteLine($"You hit {dragon.name}.");
+                Console.WriteLine(GetText(
+                    "attack_hit",
+                    "You hit {dragonName}.",
+                    ("{dragonName}", dragon.name)));
 
                 int defenseRoll = RollDie(DieSides);
 
                 if (defenseRoll <= dragon.agility)
                 {
                     // Dragon defends successfully
-                    Console.WriteLine($"{dragon.name} successfully defends your attack.");
+                    Console.WriteLine(GetText(
+                        "dragon_defend_success",
+                        "{dragonName} successfully defends your attack.",
+                        ("{dragonName}", dragon.name)));
+
+                    // Dragon's random taunt ({characterRace} is filled in by Dragon)
                     Console.WriteLine(dragon.MissedMeTaunt(player.Race.ToString()));
                 }
                 else
@@ -56,25 +77,34 @@ public class Combat
                     int damage = RollDie(player.Weapon.maxDamage);
                     dragon.health -= damage;
 
-                    Console.WriteLine($"The dragon failed to defend your attack. " +
-                                      $"Your weapon delivers {damage} damage points. " +
-                                      $"The dragon's health points is now {dragon.health}.");
+                    Console.WriteLine(GetText(
+                        "dragon_defend_fail",
+                        "The dragon failed to defend your attack. " +
+                        "Your weapon delivers {combatDamage} damage points. " +
+                        "The dragon's health points is now {combatDragonHealth}.",
+                        ("{combatDamage}", damage.ToString()),
+                        ("{combatDragonHealth}", dragon.health.ToString())));
 
                     if (dragon.health <= 0)
                     {
-                        Console.WriteLine("With the last words of 'Arggg!', you have defeated the dragon.");
+                        Console.WriteLine(GetText(
+                            "dragon_defeated_true",
+                            "With the last words of 'Arggg!', you have defeated the dragon."));
                         // Game should transition to the "End Game" activity.
                         return;
                     }
 
-                    // Dragon still alive: sarcastic reply
+                    // Dragon still alive: random sarcastic reply
                     Console.WriteLine(dragon.WasHitTaunt());
                 }
             }
             else
             {
                 // Player's attack misses
-                Console.WriteLine($"You missed {dragon.name}.");
+                Console.WriteLine(GetText(
+                    "attack_miss",
+                    "You missed {dragonName}.",
+                    ("{dragonName}", dragon.name)));
             }
 
             // ---------- Dragon's turn ----------
@@ -91,7 +121,9 @@ public class Combat
         }
 
         // Player retreated
-        Console.WriteLine("You hastily retreat licking your wounds.");
+        Console.WriteLine(GetText(
+            "player_retreat",
+            "You hastily retreat licking your wounds."));
         // Control returns to Game, which displays the main menu.
     }
 
@@ -102,21 +134,27 @@ public class Combat
     public void DragonAttacksPlayerSequence()
     {
         Console.WriteLine();
-        Console.WriteLine("It is the dragon's turn to attack.");
 
         int attackRoll = RollDie(DieSides);
 
         if (attackRoll <= dragon.strength)
         {
             // Dragon's attack hits
-            Console.WriteLine($"{dragon.name} hits you.");
+            Console.WriteLine(GetText(
+                "dragon_hit_success",
+                "{dragonName} hits you.",
+                ("{dragonName}", dragon.name)));
 
             int defenseRoll = RollDie(DieSides);
 
             if (defenseRoll <= player.Agility)
             {
                 // Player defends successfully
-                Console.WriteLine("You successfully defend the attack.");
+                Console.WriteLine(GetText(
+                    "player_defend_true",
+                    "You successfully defend the attack."));
+
+                // Player's random taunt
                 Console.WriteLine(player.MissedMeTaunt());
             }
             else
@@ -125,30 +163,58 @@ public class Combat
                 int damage = RollDie(dragon.weapon.maxDamage);
                 player.Health -= damage;
 
-                Console.WriteLine($"The dragon's attack delivers {damage} damage points. " +
-                                  $"Your health points is now {player.Health}.");
+                Console.WriteLine(GetText(
+                    "player_defend_false",
+                    "The dragon's attack delivers {combatDamage} damage points. " +
+                    "Your health points is now {combatPlayerHealth}.",
+                    ("{combatDamage}", damage.ToString()),
+                    ("{combatPlayerHealth}", player.Health.ToString())));
 
                 if (player.Health <= 0)
                 {
-                    Console.WriteLine("With the last words of 'Oh no!', you have been defeated by the dragon.");
+                    Console.WriteLine(GetText(
+                        "player_defeated_true",
+                        "With the last words of 'Oh no!', you have been defeated by the dragon."));
                     // Game should transition to the "End Game" activity.
                     return;
                 }
 
-                // Player still alive: sarcastic reply
+                // Player still alive: random sarcastic reply
                 Console.WriteLine(player.WasHitTaunt());
             }
         }
         else
         {
             // Dragon's attack misses
-            Console.WriteLine("The dragon missed you.");
+            Console.WriteLine(GetText(
+                "dragon_hit_fail",
+                "The dragon missed you."));
         }
     }
 
     // =====================================================================
     // Helper methods
     // =====================================================================
+
+    // Gets a message from Dialogue.json (through Messages) and fills in its
+    // {placeholders}. If there is no Messages object, the English fallback
+    // text is used instead so Combat still works on its own.
+    private string GetText(
+        string key,
+        string englishFallback,
+        params (string placeholder, string value)[] values)
+    {
+        string text = messages != null
+            ? messages.GetMessage(key)
+            : englishFallback;
+
+        foreach ((string placeholder, string value) in values)
+        {
+            text = text.Replace(placeholder, value);
+        }
+
+        return text;
+    }
 
     // Die (DieRoll.cs) takes the side count in its constructor and Roll() has
     // no parameters, so create a Die with the sides we need and roll it.
@@ -180,18 +246,25 @@ public class Combat
     }
 
     // Prompts for 'r' (retreat) or 'a' (attack). Returns true to keep attacking.
+    // Any other input shows the prompt again. If the input ends (null),
+    // it counts as a retreat so the game can never get stuck in this loop.
     private bool AskPlayerToContinue()
     {
         while (true)
         {
             Console.WriteLine();
-            Console.WriteLine("Enter 'r' to retreat or 'a' to attack.");
-            string? choice = Console.ReadLine()?.Trim().ToLower();
+            Console.WriteLine(GetText(
+                "choice_retreat_attack",
+                "Do you wish to retreat or attack? Enter 'r' for retreat. Enter 'a' for attack."));
+
+            string? choice = Console.ReadLine();
+
+            if (choice == null) return false;
+
+            choice = choice.Trim().ToLower();
 
             if (choice == "a") return true;
             if (choice == "r") return false;
-
-            Console.WriteLine("Invalid choice. Please try again.");
         }
     }
 }

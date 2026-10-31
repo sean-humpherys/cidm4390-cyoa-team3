@@ -3,6 +3,36 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+
+// Builds a Messages object from a few test entries (key -> English text)
+// by writing a small temporary JSON file in the same format as Dialogue.json.
+public static class MessagesTestHelper
+{
+    public static Messages Create(params (string key, string text)[] entries)
+    {
+        var json = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>>();
+
+        foreach ((string key, string text) in entries)
+        {
+            json[key] = new System.Collections.Generic.Dictionary<string, string> { ["en"] = text };
+        }
+
+        string path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".json");
+        File.WriteAllText(path, JsonSerializer.Serialize(json));
+
+        try
+        {
+            Messages messages = new Messages();
+            messages.ReadDictionary(path, "en");
+            return messages;
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+}
 
 [TestClass]
 public class CombatTests
@@ -262,8 +292,9 @@ public class CombatTests
         Assert.IsTrue(dragon.health <= 0);
 
         // The fight is over: no dragon turn, no retreat prompt, player unharmed.
-        Assert.IsFalse(Output.Contains("dragon's turn"));
-        Assert.IsFalse(Output.Contains("Enter 'r' to retreat"));
+        Assert.IsFalse(Output.Contains("hits you"));
+        Assert.IsFalse(Output.Contains("The dragon's attack delivers"));
+        Assert.IsFalse(Output.Contains("Do you wish to retreat or attack?"));
         Assert.AreEqual(50, player.Health);
     }
 
@@ -281,7 +312,6 @@ public class CombatTests
 
         new Combat(player, dragon).PlayerAttacksDragonSequence();
 
-        StringAssert.Contains(Output, "It is the dragon's turn to attack.");
         StringAssert.Contains(Output, "The dragon missed you.");
     }
 
@@ -299,7 +329,7 @@ public class CombatTests
             Output,
             "With the last words of 'Oh no!', you have been defeated by the dragon.");
         Assert.IsTrue(player.Health <= 0);
-        Assert.IsFalse(Output.Contains("Enter 'r' to retreat"));
+        Assert.IsFalse(Output.Contains("Do you wish to retreat or attack?"));
         Assert.IsFalse(Output.Contains("You hastily retreat"));
     }
 
@@ -317,7 +347,9 @@ public class CombatTests
 
         new Combat(player, dragon).PlayerAttacksDragonSequence();
 
-        StringAssert.Contains(Output, "Enter 'r' to retreat or 'a' to attack.");
+        StringAssert.Contains(
+            Output,
+            "Do you wish to retreat or attack? Enter 'r' for retreat. Enter 'a' for attack.");
     }
 
     [TestMethod]
@@ -358,7 +390,9 @@ public class CombatTests
 
         new Combat(player, dragon).PlayerAttacksDragonSequence();
 
-        Assert.AreEqual(2, CountOccurrences(Output, "Invalid choice. Please try again."));
+        // The prompt is shown again after each invalid entry (3 times in total).
+        Assert.AreEqual(3, CountOccurrences(Output, "Do you wish to retreat or attack?"));
+        Assert.AreEqual(1, CountOccurrences(Output, "You prepare yourself to attack"));
         StringAssert.Contains(Output, "You hastily retreat licking your wounds.");
     }
 
@@ -388,7 +422,6 @@ public class CombatTests
 
         new Combat(player, dragon).DragonAttacksPlayerSequence();
 
-        StringAssert.Contains(Output, "It is the dragon's turn to attack.");
         StringAssert.Contains(Output, "The dragon missed you.");
         Assert.IsFalse(Output.Contains("hits you"));
         Assert.AreEqual(50, player.Health);
@@ -430,14 +463,19 @@ public class CombatTests
     {
         Player player = CreatePlayer(AlwaysFails, AlwaysFails, 1);
         Dragon dragon = CreateDragon(AlwaysSucceeds, AlwaysFails, 50, maxDamage: 1);
-
+ 
+        // Unique reply text. (The old check looked for the fallback "!", which
+        // also appears in "Oh no!" so it always failed.)
+        player.Messages = MessagesTestHelper.Create(
+            ("player_defeated_false", "PLAYER-SARCASM"));
+ 
         new Combat(player, dragon).DragonAttacksPlayerSequence();
-
+ 
         StringAssert.Contains(
             Output,
             "With the last words of 'Oh no!', you have been defeated by the dragon.");
         Assert.IsTrue(player.Health <= 0);
-        Assert.IsFalse(Output.Contains(player.WasHitTaunt()));
+        Assert.IsFalse(Output.Contains("PLAYER-SARCASM"));
     }
 
     [TestMethod]
@@ -472,5 +510,157 @@ public class CombatTests
         new Combat(player, dragon).DragonAttacksPlayerSequence();
 
         Assert.AreEqual(50, dragon.health);
+    }
+
+    // ===============================================================
+    // End of input
+    // ===============================================================
+
+    [TestMethod]
+    [Timeout(5000)]
+    public void PlayerAttack_EndOfInput_CountsAsRetreat()
+    {
+        Player player = CreatePlayer(AlwaysFails, AlwaysFails, 50);
+        Dragon dragon = CreateDragon(AlwaysFails, AlwaysFails, 50);
+        Console.SetIn(new StringReader(""));   // no keystrokes at all
+
+        new Combat(player, dragon).PlayerAttacksDragonSequence();
+
+        StringAssert.Contains(Output, "You hastily retreat licking your wounds.");
+    }
+
+    // ===============================================================
+    // Messages (Dialogue.json) support
+    // ===============================================================
+
+    [TestMethod]
+    [Timeout(5000)]
+    public void Messages_AttackText_ComesFromMessagesAndFillsPlaceholders()
+    {
+        Messages messages = MessagesTestHelper.Create(
+            ("attack_intro", "INTRO {characterOccupation}/{characterWeapon}"),
+            ("attack_hit", "HIT {dragonName}"),
+            ("dragon_defend_success", "DEFENDED {dragonName}"));
+
+        Player player = CreatePlayer(AlwaysSucceeds, AlwaysFails, 50);
+        Dragon dragon = CreateDragon(AlwaysFails, AlwaysSucceeds, 50);
+        SetInput("r");
+
+        new Combat(player, dragon, messages).PlayerAttacksDragonSequence();
+
+        StringAssert.Contains(Output, "INTRO Fighter/long sword");
+        StringAssert.Contains(Output, "HIT Smaug");
+        StringAssert.Contains(Output, "DEFENDED Smaug");
+        Assert.IsFalse(Output.Contains("You hit"));
+    }
+
+    [TestMethod]
+    [Timeout(5000)]
+    public void Messages_MissText_ComesFromMessages()
+    {
+        Messages messages = MessagesTestHelper.Create(
+            ("attack_miss", "MISS {dragonName}"),
+            ("dragon_hit_fail", "DRAGON-MISS"));
+
+        Player player = CreatePlayer(AlwaysFails, AlwaysFails, 50);
+        Dragon dragon = CreateDragon(AlwaysFails, AlwaysFails, 50);
+        SetInput("r");
+
+        new Combat(player, dragon, messages).PlayerAttacksDragonSequence();
+
+        StringAssert.Contains(Output, "MISS Smaug");
+        StringAssert.Contains(Output, "DRAGON-MISS");
+    }
+
+    [TestMethod]
+    [Timeout(5000)]
+    public void Messages_DamageText_FillsDamageAndHealthPlaceholders()
+    {
+        Messages messages = MessagesTestHelper.Create(
+            ("dragon_defend_fail", "DRAGON-DMG={combatDamage} HP={combatDragonHealth}"),
+            ("dragon_hit_success", "DRAGON-HITS {dragonName}"),
+            ("player_defend_false", "PLAYER-DMG={combatDamage} HP={combatPlayerHealth}"));
+
+        Player player = CreatePlayer(AlwaysSucceeds, AlwaysFails, 50, maxDamage: 1);
+        Dragon dragon = CreateDragon(AlwaysSucceeds, AlwaysFails, 50, maxDamage: 1);
+        SetInput("r");
+
+        new Combat(player, dragon, messages).PlayerAttacksDragonSequence();
+
+        StringAssert.Contains(Output, "DRAGON-DMG=1 HP=49");
+        StringAssert.Contains(Output, "DRAGON-HITS Smaug");
+        StringAssert.Contains(Output, "PLAYER-DMG=1 HP=49");
+    }
+
+    [TestMethod]
+    [Timeout(5000)]
+    public void Messages_PromptAndRetreatText_ComeFromMessages()
+    {
+        Messages messages = MessagesTestHelper.Create(
+            ("choice_retreat_attack", "PROMPT"),
+            ("player_retreat", "RETREAT-TEXT"));
+
+        Player player = CreatePlayer(AlwaysFails, AlwaysFails, 50);
+        Dragon dragon = CreateDragon(AlwaysFails, AlwaysFails, 50);
+        SetInput("r");
+
+        new Combat(player, dragon, messages).PlayerAttacksDragonSequence();
+
+        StringAssert.Contains(Output, "PROMPT");
+        StringAssert.Contains(Output, "RETREAT-TEXT");
+        Assert.IsFalse(Output.Contains("hastily"));
+    }
+
+    [TestMethod]
+    [Timeout(5000)]
+    public void Messages_DefeatText_ComesFromMessages()
+    {
+        Messages messages = MessagesTestHelper.Create(
+            ("dragon_defeated_true", "DRAGON-DEAD"),
+            ("player_defeated_true", "PLAYER-DEAD"));
+
+        // Dragon defeated
+        Player player = CreatePlayer(AlwaysSucceeds, AlwaysFails, 50, maxDamage: 1);
+        Dragon dragon = CreateDragon(AlwaysFails, AlwaysFails, 1);
+        SetInput("r");
+        new Combat(player, dragon, messages).PlayerAttacksDragonSequence();
+        StringAssert.Contains(Output, "DRAGON-DEAD");
+
+        // Player defeated
+        Player weakPlayer = CreatePlayer(AlwaysFails, AlwaysFails, 1);
+        Dragon strongDragon = CreateDragon(AlwaysSucceeds, AlwaysFails, 50, maxDamage: 1);
+        new Combat(weakPlayer, strongDragon, messages).DragonAttacksPlayerSequence();
+        StringAssert.Contains(Output, "PLAYER-DEAD");
+    }
+
+    [TestMethod]
+    public void Messages_CombatUsesTheDragonsMessagesWhenNoneIsPassedIn()
+    {
+        Messages messages = MessagesTestHelper.Create(
+            ("dragon_hit_success", "DRAGON-HITS {dragonName}"));
+
+        Player player = CreatePlayer(AlwaysFails, AlwaysFails, 50);
+        Dragon dragon = new Dragon("Smaug", messages);
+        dragon.InitializeStats(AlwaysSucceeds, AlwaysFails, 50);
+        dragon.weapon = new Weapon("claws", 1, "##");
+
+        new Combat(player, dragon).DragonAttacksPlayerSequence();
+
+        StringAssert.Contains(Output, "DRAGON-HITS Smaug");
+    }
+
+    [TestMethod]
+    public void Messages_MissingKey_ShowsMissingMessagePlaceholder()
+    {
+        // When Messages is in use but a key is not in the file, the visible
+        // [Missing message ...] text makes a typo in a key name easy to spot.
+        Messages messages = MessagesTestHelper.Create(("unrelated_key", "x"));
+
+        Player player = CreatePlayer(AlwaysFails, AlwaysFails, 50);
+        Dragon dragon = CreateDragon(AlwaysFails, AlwaysFails, 50);
+
+        new Combat(player, dragon, messages).DragonAttacksPlayerSequence();
+
+        StringAssert.Contains(Output, "[Missing message dragon_hit_fail]");
     }
 }
