@@ -1,0 +1,278 @@
+{
+  "intro": 
+  {
+    "en": "Welcome to Choose Your Adventure Game",
+    "fr": "Bienvenue dans votre jeu d'aventure", 
+    "es": "Bienvenido al juego «Elige tu aventura»" 
+  },
+  "choice_create_exit":
+  {
+    "en": "Choose; 1. Create Character or 2. Exit. Type '1' or '2'",
+    "fr": "Choisissez : 1. Créer un personnage ou 2. Quitter. Tapez '1' ou '2'",
+    "es": "Elige: 1. Crear personaje o 2. Salir. Escribe '1' o '2'"
+  },
+  "choice_cardinal":
+  {
+    "en": "You are walking in the mountains... Enter 'n' for North. Enter 's' for South. Enter 'e' for exit game",
+    "fr": "Vous marchez dans les montagnes... Entrez « n » pour le nord. Entrez « s » pour le sud. Entrez « e » pour quitter le jeu.",
+    "es": "Estás caminando por las montañas... Introduce 'n' para Norte. Introduce 's' para Sur. Introduce 'e' para salir del juego."
+  },
+  "choice_cardinal_south":
+  {
+    "en": "You take the South path... still bored",
+    "fr": "Tu prends le chemin du Sud... tu t'ennuies.",
+    "es": "Tomas el camino del sur... sigues aburrido"
+  },
+  "choice_cardinal_north":
+  {
+    "en": "You take the North path... The dragon has a hoard of gold behind it.",
+    "fr": "Vous prenez le sentier du Nord... Le dragon a un trésor d'or derrière lui.",
+    "es": "Tomas el camino del norte... El dragón tiene un tesoro de oro detrás."
+  },
+  "dragon_intro":
+  {
+    "en": "The dragon says 'I am {dragonName}. Leave or perish!",
+    "fr": "Le dragon dit : « Je suis {dragonName}. Partez ou périssez ! »",
+    "es": "El dragón dice: 'Soy {dragonName}. ¡Vete o perece!'"
+  },
+  "ring":
+  {
+    "en": "Your magic ring gives you the stats on the dragon.",
+    "fr": "Votre bague magique vous donne les statistiques du dragon.",
+    "es": "Tu anillo mágico te da las estadísticas del dragón."
+  },
+  "choice_retreat_attack":
+  {
+    "en": "Do you wish to retreat or attack? Enter 'r' for retreat. Enter 'a' for attack.",
+    "fr": "Souhaitez-vous battre en retraite ou attaquer ? Entrez « r » pour battre en retraite. Entrez « a » pour attaquer.",
+    "es": "¿Deseas retirarte o atacar? Introduce 'r' para retirarte. Introduce 'a' para atacar."
+  },
+  "character_initial":
+  {
+    "en": "What race of character do you want to be? Human, Elf, Dwarf or Halfling?",
+    "fr": "Quelle race de personnage voulez-vous être ? Humain, Elfe, Nain ou Halfelin ?",
+    "es": "¿Qué raza de personaje quieres ser? ¿Humano, Elfo, Enano o Mediano?"
+  },
+  "character_name":
+  {
+    "en": "What is the name of your character?",
+    "fr": "Quel est le nom de votre personnage ?",
+    "es": "¿Cuál es el nombre de tu personaje?"
+  },
+  "character_occupation":
+  {
+    "en": "What is the occupation of your character? Fighter, magician, thief, or archer?",
+    "fr": "Quelle est la profession de votre personnage ? Combattant, magicien, voleur ou archer ?",
+    "es": "¿Cuál es la ocupación de tu personaje? ¿Guerrero, mago, ladrón o arquero?"
+  },
+  "character_strength":
+  {
+    "en": "Next, we are going to roll for strength. Type 'roll'",
+    "fr": "Ensuite, nous allons lancer les dés pour la force. Tapez 'roll'",
+    "es": "A continuación, vamos a tirar los dados para la fuerza. Escribe 'roll'"
+  },
+  "character_agility":
+  {
+    "en": "Next, we will roll for agility. Type 'roll'",
+    "fr": "Ensuite, nous allons lancer les dés pour l'agilité. Tapez 'roll'",
+    "es": "A continuación, vamos a tirar los dados para la agilidad. Escribe 'roll'"
+  },
+  "character_health":
+  {
+    "en": "Next, we will roll for health points. Type 'roll'",
+    "fr": "Ensuite, nous allons lancer les dés pour les points de vie. Tapez 'roll'",
+    "es": "A continuación, vamos a tirar los dados para los puntos de salud. Escribe 'roll'"
+  },
+  "choice_stats_adventure":
+  {
+    "en": "What would you like to do next? 1. List character stats. 2. Proceed on an adventure. Type '1' or '2'",
+    "fr": "Que voulez-vous faire ensuite ? 1. Lister les statistiques du personnage. 2. Partir à l'aventure. Tapez '1' ou '2'",
+    "es": "¿Qué te gustaría hacer a continuación? 1. Listar las estadísticas del personaje. 2. Proceder a una aventura. Escribe '1' o '2'"
+  },
+  "attack_intro":
+  {
+    "en": "You prepare yourself to attack the dragon with your weapon. As a {characterOccupation} you withdraw your {characterWeapon}. You attack.",
+    "fr": "Vous vous préparez à attaquer le dragon avec votre arme. En tant que {characterOccupation}, vous retirez votre {characterWeapon}. Vous attaquez.",
+    "es": "Te preparas para atacar al dragón con tu arma. Como {characterOccupation}, sacas tu {characterWeapon}. Atacas."
+  },
+  "attack_miss":
+  {
+    "en": "You missed {dragonName}.",
+    "fr": "Vous avez raté {dragonName}.",
+    "es": "Fallaste a {dragonName}."
+  },
+  "attack_hit":
+  {
+    "en": "You hit {dragonName}.",
+    "fr": "Vous avez touché {dragonName}.",
+    "es": "Golpeaste a {dragonName}."
+  },
+  "dragon_defend_success":
+  {
+    "en": "{dragonName} successfully defends your attack.",
+    "fr": "{dragonName} défend avec succès votre attaque.",
+    "es": "{dragonName} defiende con éxito tu ataque."
+  },
+  "dragon_defend_fail":
+  {
+    "en": "The dragon failed to defend your attack. Your weapon delivers {combatDamage} damage points. The dragon's health points is now {combatDragonHealth}",
+    "fr": "Le dragon n'a pas réussi à défendre votre attaque. Votre arme inflige {combatDamage} points de dégâts. Les points de vie du dragon sont maintenant de {combatDragonHealth}.",
+    "es": "El dragón no logró defender tu ataque. Tu arma inflige {combatDamage} puntos de daño. Los puntos de salud del dragón ahora son {combatDragonHealth}."
+  },
+  "dragon_defeated_true":
+  {
+    "en": "With the last words of 'Arggg!', you have defeated the dragon.",
+    "fr": "Avec les derniers mots de 'Arggg !', vous avez vaincu le dragon.",
+    "es": "Con las últimas palabras de '¡Arggg!', has derrotado al dragón."
+  },
+  "dragon_defeated_false":
+  {
+    "en":
+    [
+        "Ow! That actually stung a bit!",
+        "Impressive! You might actually be worth toasting...",
+        "That... was unexpected. But I assure you, it won't happen again.",
+        "Well, I'll be! You have more bite than I thought!"
+    ],
+    "fr":
+    [
+        "Aïe ! Ça a fait un peu mal !",
+        "Impressionnant ! Vous pourriez vraiment valoir la peine d'être grillé...",
+        "C'était... inattendu. Mais je vous assure que cela ne se reproduira pas.",
+        "Eh bien, je vais être ! Vous avez plus de mordant que je ne le pensais !"
+    ],
+    "es":
+    [
+        "¡Ay! Eso realmente dolió un poco!",
+        "¡Impresionante! Puede que realmente valga la pena tostar...",
+        "Eso... fue inesperado. Pero te aseguro que no volverá a pasar.",
+        "Bueno, ¡vaya! ¡Tienes más mordaza de lo que pensaba!"
+    ]
+  },
+  "dragon_taunt":
+  {
+    "en":
+    [
+        "Missed me, breath of a gnat!",
+        "Is that all you've got? I've seen kittens with more fire in their paws!",
+        "Try harder {characterRace}! You're making me yawn!",
+        "Maybe if you squinted harder, you'd actually hit something!"
+    ],
+    "fr":
+    [
+        "Tu m'as raté, souffle d'un moucheron !",
+        "C'est tout ce que tu as ? J'ai vu des chatons avec plus de feu dans leurs pattes !",
+        "Essaie plus fort {characterRace} ! Tu me fais bâiller !",
+        "Peut-être que si tu plissais les yeux plus fort, tu toucherais réellement quelque chose !"
+    ],
+    "es":
+    [
+        "¡Me fallaste, aliento de un mosquito!",
+        "¿Eso es todo lo que tienes? He visto gatitos con más fuego en sus patas!",
+        "¡Intenta más fuerte {characterRace}! Me estás haciendo bostezar!",
+        "Quizás si apretaras más los ojos, realmente golpearías algo!"
+    ]
+  },
+  "dragon_hit_success":
+  {
+    "en": "{dragonName} hits you.",
+    "fr": "{dragonName} vous frappe.",
+    "es": "{dragonName} te golpea."
+  },
+  "dragon_hit_fail":
+  {
+    "en": "The dragon missed you",
+    "fr": "Le dragon vous a raté.",
+    "es": "El dragón te falló."
+  },
+  "player_defend_true":
+  {
+    "en": "You successfully defend the attack.",
+    "fr": "Vous défendez avec succès l'attaque.",
+    "es": "Defiendes con éxito el ataque."
+  },
+  "player_defend_false":
+  {
+    "en": "The dragon's attack delivers {combatDamage} damage points. Your health points is now {combatPlayerHealth}",
+    "fr": "L'attaque du dragon inflige {combatDamage} points de dégâts. Vos points de vie sont maintenant de {combatPlayerHealth}.",
+    "es": "El ataque del dragón inflige {combatDamage} puntos de daño. Tus puntos de salud ahora son {combatPlayerHealth}."
+  },
+  "player_taunt":
+  {
+    "en":
+    [
+        "Missed me by a mile! Maybe try opening both eyes next time!",
+        "Too slow, scaled-face! You couldn't hit the broad side of your own mountain!",
+        "Nice swing, clumsy! Did your tail get in the way again?",
+        "Swing and a miss, oversized lizard! You're going to have to do a lot better than that!"
+    ],
+    "fr":
+    [
+        "Tu m'as raté de beaucoup! Essaye d'ouvrir les deux yeux la prochaine fois!",
+        "Trop lent, tête d'écailles ! Tu n'as pas réussi à toucher le flanc de ta propre montagne !",
+        "Belle frappe, maladroit! Est-ce que ta queue t'a encore gêné?",
+        "Coup et manqué, lézard géant! Tu vas devoir faire beaucoup mieux que ça!"
+    ],
+    "es":
+    [
+        "¡Me fallaste por un camino! Tal vez deberías abrir ambos ojos la próxima vez.",
+        "¡Demasiado lento, cara escamosa! No pudiste golpear el costado ancho de tu propia montaña.",
+        "¡Buen swing, torpe! ¿Tu cola volvió a estar en el camino?",
+        "¡Golpe y fallido, lagarto gigante! Tienes que hacer mucho mejor que eso."
+    ]
+  },
+  "player_defeated_true":
+  {
+    "en": "With the last words of 'Oh no!', you have been defeated by the dragon.",
+    "fr": "Avec les derniers mots de 'Oh non !', vous avez été vaincu par le dragon.",
+    "es": "Con las últimas palabras de '¡Oh no!', has sido derrotado por el dragón."
+  },
+  "player_defeated_false":
+  {
+    "en":
+    [
+        "It's just a flesh wound.",
+        "You will rue the day you met me.",
+        "Ha. I'm still breathing.",
+        "I never give up! I never surrender!"
+    ],
+    "fr":
+    [
+        "C'est juste une blessure superficielle.",
+        "Tu regretteras le jour où tu m'as rencontré.",
+        "Ha. Je suis encore en vie.",
+        "Je ne désespère jamais ! Je ne me rends jamais !"
+    ],
+    "es":
+    [
+        "Es solo una herida de carne.",
+        "Lamentarás el día que me conociste.",
+        "Ja. Todavía estoy respirando.",
+        "¡Nunca me rindo! ¡Nunca me rindo!"
+    ]
+  },
+  "player_retreat":
+  {
+    "en": "You hastily retreat licking your wounds.",
+    "fr": "Vous vous retirez précipitamment en léchant vos blessures.",
+    "es": "Te retiras apresuradamente lamiéndote las heridas."
+  },
+  "endgame_retreat":
+  {
+    "en": "You quickly retreat... The End.",
+    "fr": "Vous vous retirez rapidement... La Fin.",
+    "es": "Te retiras rápidamente... El Fin."
+  },
+  "endgame_dragon_defeated":
+  {
+    "en": "With the dragon defeated... The End.",
+    "fr": "Avec le dragon vaincu... La Fin.",
+    "es": "Con el dragón derrotado... El Fin."
+  },
+  "endgame_player_defeated":
+  {
+    "en": "The dragon laughs as your eyesight fades... The End.",
+    "fr": "Le dragon rit alors que votre vue s'estompe... La Fin.",
+    "es": "El dragón se ríe mientras tu vista se desvanece... El Fin."
+  }
+}

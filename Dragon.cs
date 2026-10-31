@@ -1,4 +1,5 @@
 using System;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 
 public class Dragon
 {
@@ -11,14 +12,6 @@ public class Dragon
 
     // Reference to the localization messages dictionary
     public Messages? Messages { get; set; }
-
-    // Dictionary IDs representing defense taunts in language files
-    // Example: 101-104 correspond to the 4 defensive lines in the dictionary
-    private readonly int[] _missedTauntIds = new int[] { 101, 102, 103, 104 };
-
-    // Dictionary IDs representing hit reaction lines in language files
-    // Example: 201-204 correspond to the 4 hit reaction lines in the dictionary
-    private readonly int[] _wasHitTauntIds = new int[] { 201, 202, 203, 204 };
 
     
     // Initializes Dragon with default weapon ("claws", 12, "##") and optional Messages service.
@@ -50,7 +43,7 @@ public class Dragon
         health = hp;
     }
 
-    //Returns a defense taunt by delegating to Messages.GetMessage(),
+    //Returns a defense taunt from the "dragon_taunt" message
     //or returns a default fallback if Messages is not configured.
     
     public string MissedMeTaunt()
@@ -60,34 +53,17 @@ public class Dragon
             return "...";
         }
 
-        // Shuffle the IDs so attempts remain random while allowing fallbacks
-        int[] shuffledIds = _missedTauntIds.OrderBy(_ => Random.Shared.Next()).ToArray();
+        string message = Messages.GetMessage("dragon_taunt");
 
-        foreach (int id in shuffledIds)
+        // GetMessage returns a [Missing message ...] placeholder when the name is not found
+        // so language=neutral fallback is returned instead
+
+        if (string.IsNullOrWhiteSpace(message) || message.StartsWith("["))
         {
-            try
-            {
-                string message = Messages.GetMessage(id);
-
-                if (!string.IsNullOrWhiteSpace(message) && !message.StartsWith("["))
-                {
-                    return message;
-                }
-            }
-            catch (KeyNotFoundException)
-            {
-                // Key not found in current language dictionary; retry next available ID
-                continue;
-            }
-            catch (Exception)
-            {
-                // Any read failure or dictionary issue; attempt next ID
-                continue;
-            }
+            return "...";
         }
 
-        // Language-neutral fallback if all IDs fail or dictionary is empty
-        return "...";
+        return message;
     }
 
     // Overload allowing race substitution if the dictionary string contains {race}.
@@ -95,10 +71,10 @@ public class Dragon
     public string MissedMeTaunt(string race)
     {
         string raw = MissedMeTaunt();
-        return string.IsNullOrEmpty(raw) ? raw : raw.Replace("{race}", race);
+        return string.IsNullOrEmpty(raw) ? raw : raw.Replace("{characterRace}", race);
     }
-    //Resolves a localized reaction when the dragon is hit by the player.
-    // Retries alternate IDs if a key is missing; avoids hardcoded English fallbacks.  
+    //Resolves a localized reaction from the "dragon_defeated_false" message
+    // Avoids hardcoded English fallbacks  
     public string WasHitTaunt()
     {
         if (Messages == null)
@@ -106,31 +82,15 @@ public class Dragon
             return "!";
         }
 
-        int[] shuffledIds = _wasHitTauntIds.OrderBy(_ => Random.Shared.Next()).ToArray();
+       string message = Messages.GetMessage("dragon_defeated_false");
 
-        foreach (int id in shuffledIds)
+       // Language-neutral fallback if message name is not found
+       if (string.IsNullOrWhiteSpace(message) || message.StartsWith("["))
         {
-            try
-            {
-                string message = Messages.GetMessage(id);
-
-                if (!string.IsNullOrWhiteSpace(message) && !message.StartsWith("["))
-                {
-                    return message;
-                }
-            }
-            catch (KeyNotFoundException)
-            {
-                continue;
-            }
-            catch (Exception)
-            {
-                continue;
-            }
+            return "!";
         }
 
-        // Language-neutral fallback if all hit IDs fail
-        return "!";
+        return message;
     }
 
     public string DisplayStats()
