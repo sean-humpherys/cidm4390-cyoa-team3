@@ -8,7 +8,7 @@ public class Player
 
     public int Strength { get; private set; }
     public int Agility { get; private set; }
-    public int Health { get; private set; }
+    public int Health { get; set; }
 
     // The racial modifier roll is always 1-4 after stats are rolled.
     public int StrengthModifier { get; private set; }
