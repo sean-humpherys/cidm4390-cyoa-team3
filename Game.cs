@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 
 public class Game
 {
@@ -7,6 +9,8 @@ public class Game
     public Dragon? Dragon { get; set; }
     public Die Die { get; set; }
     public bool IsRunning { get; set; }
+
+    private const string MessagesFilePath = "game_messages.json";
 
     /// <summary>
     /// Default constructor initializing core dependencies.
@@ -29,11 +33,18 @@ public class Game
     }
 
     /// <summary>
-    /// Top-level adventure loop coordinating all lifecycle stages per the Start Game Activity Diagram.
+    /// Top-level adventure loop coordinating all lifecycle stages.
     /// </summary>
     public void Start()
     {
-        Console.Title = "Welcome to Choose Your Adventure Game";
+        try
+        {
+            Console.Title = "Welcome to Choose Your Adventure Game";
+        }
+        catch (Exception)
+        {
+            // Suppress console title errors in non-interactive/redirected environments
+        }
 
         while (IsRunning)
         {
@@ -65,15 +76,15 @@ public class Game
             PromptPlayAgain();
         }
 
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(19));
+        ConsoleDisplayAndInput.PrintStoryGreen("\nFarewell, brave adventurer.");
     }
 
     /// <summary>
-    /// Prompts for language and loads the dictionary via Messages.
+    /// Prompts for language and loads the dictionary from game_messages.json.
     /// </summary>
     public void SetupLanguage()
     {
-        Console.Clear();
+        SafeClear();
         ConsoleDisplayAndInput.PrintStoryGreen("==================================================");
         ConsoleDisplayAndInput.PrintStoryGreen("     SELECT LANGUAGE / ELIGE IDIOMA / LANGUE      ");
         ConsoleDisplayAndInput.PrintStoryGreen("==================================================");
@@ -84,16 +95,16 @@ public class Game
 
         int choice = ConsoleDisplayAndInput.AskForChoice(1, 3);
 
-        string filePath = choice switch
-    {
-        2 => "Spanish.txt",
-        3 => "French.txt",
-        _ => "English.txt"
-    };
+        string languageCode = choice switch
+        {
+            2 => "es",
+            3 => "fr",
+            _ => "en"
+        };
 
         try
         {
-            Messages.ReadDictionary(filePath);
+            Messages.ReadDictionary(MessagesFilePath, languageCode);
         }
         catch (Exception ex)
         {
@@ -106,9 +117,9 @@ public class Game
     /// </summary>
     public bool DisplayWelcomeAndMenu()
     {
-        Console.Clear();
-        ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage(1) + "\n");
-        ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage(2));
+        SafeClear();
+        ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("intro") + "\n");
+        ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("choice_create_exit"));
         Console.Write("> ");
 
         int choice = ConsoleDisplayAndInput.AskForChoice(1, 2);
@@ -129,43 +140,66 @@ public class Game
     /// </summary>
     public void SetupPlayer()
     {
-        Console.Clear();
-        ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage(4));
+        SafeClear();
 
-        // 1. Name input with validation
-        Console.Write(Messages.GetMessage(5));
-        string name = ConsoleDisplayAndInput.AskForName();
-
-        // 2. Race Selection
+        // 1. Race Selection ("character_initial")
         Race chosenRace = PromptRace();
 
-        // 3. Occupation Selection
+        // 2. Name input with validation ("character_name")
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_name"));
+        Console.Write("> ");
+        string name = ConsoleDisplayAndInput.AskForName();
+
+        // 3. Occupation Selection ("character_occupation")
         Occupation chosenOccupation = PromptOccupation();
 
-        // 4. Instantiate Player (auto-assigns weapon via OccupationRules)
+        // 4. Instantiate Player
         Player = new Player(name, chosenRace, chosenOccupation);
 
-        // 5. Roll stats interactively
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(9));
+        // 5. Roll stats interactively with prompts from JSON
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_strength"));
+        Console.Write("> ");
+        ConsoleDisplayAndInput.WaitForRoll();
+
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_agility"));
+        Console.Write("> ");
+        ConsoleDisplayAndInput.WaitForRoll();
+
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_health"));
+        Console.Write("> ");
+        ConsoleDisplayAndInput.WaitForRoll();
+
         Player.RollInitialStats();
 
-        // 6. Review stats before journey
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Player.DisplayStats());
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(10));
-        Console.ReadKey(true);
+        // 6. Post-roll review & branch ("choice_stats_adventure")
+        while (true)
+        {
+            ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_stats_adventure"));
+            Console.Write("> ");
+            int postChoice = ConsoleDisplayAndInput.AskForChoice(1, 2);
+
+            if (postChoice == 1)
+            {
+                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Player.DisplayStats());
+            }
+            else
+            {
+                break;
+            }
+        }
     }
 
     private Race PromptRace()
     {
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(7).Replace("\\n", "\n"));
+        ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("character_initial"));
+        ConsoleDisplayAndInput.PrintStoryGreen("1. Human | 2. Elf | 3. Dwarf | 4. Halfling");
         Console.Write("> ");
 
         int choice = ConsoleDisplayAndInput.AskForChoice(1, 4);
 
         return choice switch
         {
-            1 => Race.Elf,
-            2 => Race.Human,
+            2 => Race.Elf,
             3 => Race.Dwarf,
             4 => Race.Halfling,
             _ => Race.Human
@@ -174,14 +208,14 @@ public class Game
 
     private Occupation PromptOccupation()
     {
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(8).Replace("\\n", "\n"));
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_occupation"));
+        ConsoleDisplayAndInput.PrintStoryGreen("1. Fighter | 2. Magician | 3. Thief | 4. Archer");
         Console.Write("> ");
 
         int choice = ConsoleDisplayAndInput.AskForChoice(1, 4);
 
         return choice switch
         {
-            1 => Occupation.Fighter,
             2 => Occupation.Magician,
             3 => Occupation.Thief,
             4 => Occupation.Archer,
@@ -190,7 +224,7 @@ public class Game
     }
 
     /// <summary>
-    /// Executes the Mountain Exploration path, Dragon dialogue, Ring check, and Encounter branch.
+    /// Executes Mountain Exploration path, Dragon dialogue, Ring check, and Encounter branch.
     /// </summary>
     private bool ExploreMountains()
     {
@@ -199,62 +233,59 @@ public class Game
             return false;
         }
 
-        Console.Clear();
+        SafeClear();
 
         // Path selection loop: North, South, or Exit
         while (true)
         {
-            ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage(11));
+            ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("choice_cardinal"));
             Console.Write("> ");
 
             char pathChoice = ConsoleDisplayAndInput.AskForLetter("nse");
 
             if (pathChoice == 'e')
             {
-                // 'e' -> Exit Game
                 return false;
             }
 
             if (pathChoice == 's')
             {
-                // 's' -> South path narrative, loops back
-                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(12) + "\n");
+                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_cardinal_south") + "\n");
                 continue;
             }
 
             if (pathChoice == 'n')
             {
-                // 'n' -> North path leads directly to the dragon
-                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(13) + "\n");
+                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_cardinal_north") + "\n");
                 break;
             }
         }
 
-        // Dragon Threat: Red Foreground Text
-        ConsoleDisplayAndInput.PrintDragonRed(string.Format(Messages.GetMessage(14), Dragon.name));
+        // Dragon Threat in Red ("dragon_intro")
+        string dragonIntroTemplate = Messages.GetMessage("dragon_intro");
+        string dragonWarning = dragonIntroTemplate.Replace("{dragonName}", Dragon.name);
+        ConsoleDisplayAndInput.PrintDragonRed(dragonWarning);
 
-        // Magic Ring gives dragon's stats
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(15));
+        // Magic Ring gives dragon's stats ("ring")
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("ring"));
         ConsoleDisplayAndInput.PrintStoryGreen(Dragon.DisplayStats());
 
-        // Encounter Choice: Retreat or Attack
+        // Encounter Choice: Retreat or Attack ("choice_retreat_attack")
         while (true)
         {
-            ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(16));
+            ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_retreat_attack"));
             Console.Write("> ");
 
             char combatChoice = ConsoleDisplayAndInput.AskForLetter("ra");
 
             if (combatChoice == 'r')
             {
-                // 'r' -> Retreat End Game narrative
-                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(17));
+                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("endgame_retreat"));
                 return true;
             }
 
             if (combatChoice == 'a')
             {
-                // 'a' -> Hand off to Combat class
                 Combat combat = new Combat(Player, Dragon);
                 combat.StartBattle();
                 return true;
@@ -267,7 +298,7 @@ public class Game
     /// </summary>
     public void PromptPlayAgain()
     {
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage(18));
+        ConsoleDisplayAndInput.PrintStoryGreen("\nWould you like to embark on another adventure? (Y/N): ");
         Console.Write("> ");
 
         char choice = ConsoleDisplayAndInput.AskForLetter("yn");
@@ -275,6 +306,21 @@ public class Game
         if (choice != 'y')
         {
             IsRunning = false;
+        }
+    }
+
+    /// <summary>
+    /// Safely clears the console without throwing an IOException when executed in redirected/test environments.
+    /// </summary>
+    private static void SafeClear()
+    {
+        try
+        {
+            Console.Clear();
+        }
+        catch (IOException)
+        {
+            // Ignored during automated tests where stdout has no buffer handle
         }
     }
 }

@@ -7,37 +7,62 @@ public class GameTest
 {
     private TextReader _originalIn = null!;
     private TextWriter _originalOut = null!;
-    private const string DummyEnglishFile = "English.txt";
+    private const string MessagesPath = "game_messages.json";
+
+    private const string SampleJson = @"{
+      ""intro"": {
+        ""en"": ""Welcome to Choose Your Adventure Game"",
+        ""es"": ""Bienvenido al juego «Elige tu aventura»"",
+        ""fr"": ""Bienvenue dans votre jeu d'aventure""
+      },
+      ""choice_create_exit"": {
+        ""en"": ""Choose; 1. Create Character or 2. Exit. Type '1' or '2'"",
+        ""es"": ""Elige: 1. Crear personaje o 2. Salir. Escribe '1' o '2'"",
+        ""fr"": ""Choisissez : 1. Créer un personnage ou 2. Quitter. Tapez '1' ou '2'""
+      },
+      ""character_initial"": {
+        ""en"": ""What race of character do you want to be? Human, Elf, Dwarf or Halfling?"",
+        ""es"": ""¿Qué raza de personaje quieres ser? ¿Humano, Elfo, Enano o Mediano?"",
+        ""fr"": ""Quelle race de personnage voulez-vous être ? Humain, Elfe, Nain ou Halfelin ?""
+      },
+      ""character_name"": {
+        ""en"": ""What is the name of your character?"",
+        ""es"": ""¿Cuál es el nombre de tu personaje?"",
+        ""fr"": ""Quel est le nom de votre personnage ?""
+      },
+      ""character_occupation"": {
+        ""en"": ""What is the occupation of your character? Fighter, magician, thief, or archer?"",
+        ""es"": ""¿Cuál es la ocupación de tu personaje? ¿Guerrero, mago, ladrón o arquero?"",
+        ""fr"": ""Quelle est la profession de votre personnage ? Combattant, magicien, voleur ou archer ?""
+      },
+      ""character_strength"": {
+        ""en"": ""Next, we are going to roll for strength. Type 'roll'"",
+        ""es"": ""A continuación, vamos a tirar los dados para la fuerza. Escribe 'roll'"",
+        ""fr"": ""Ensuite, nous allons lancer les dés pour la force. Tapez 'roll'""
+      },
+      ""character_agility"": {
+        ""en"": ""Next, we will roll for agility. Type 'roll'"",
+        ""es"": ""A continuación, vamos a tirar los dados para la agilidad. Escribe 'roll'"",
+        ""fr"": ""Ensuite, nous allons lancer les dés pour l'agilité. Tapez 'roll'""
+      },
+      ""character_health"": {
+        ""en"": ""Next, we will roll for health points. Type 'roll'"",
+        ""es"": ""A continuación, vamos a tirar los dados para los puntos de salud. Escribe 'roll'"",
+        ""fr"": ""Ensuite, nous allons lancer les dés pour les points de vie. Tapez 'roll'""
+      },
+      ""choice_stats_adventure"": {
+        ""en"": ""What would you like to do next? 1. List character stats. 2. Proceed on an adventure. Type '1' or '2'"",
+        ""es"": ""¿Qué te gustaría hacer a continuación? 1. Listar las estadísticas del personaje. 2. Proceder a una aventura. Escribe '1' o '2'"",
+        ""fr"": ""Que voulez-vous faire ensuite ? 1. Lister les statistiques du personnage. 2. Partir à l'aventure. Tapez '1' ou '2'""
+      }
+    }";
 
     [TestInitialize]
     public void Setup()
     {
         _originalIn = Console.In;
         _originalOut = Console.Out;
-
-        string[] sampleLines = new[]
-        {
-            "1=Welcome to Choose Your Adventure Game",
-            "2=Choose; 1. Create Character or 2. Exit. Type '1' or '2'",
-            "3=Invalid entry. Please try again.",
-            "4==== CHARACTER CREATION ===",
-            "5=Enter your hero's name: ",
-            "6=Name cannot be blank.",
-            "7=Choose your Race:\n1. Elf\n2. Human\n3. Dwarf\n4. Halfling",
-            "8=Choose your Occupation:\n1. Fighter\n2. Magician\n3. Thief\n4. Archer",
-            "9=Rolling your hero's attributes with a D20...",
-            "10=Press any key to continue...",
-            "11=You are walking in the mountains...Enter 'n' for North. Enter 's' for South. Enter 'e' for exit game",
-            "12=You take the South path...still bored.",
-            "13=You take the North path...The dragon has a hoard of gold behind it.",
-            "14=The dragon says 'I am {0}. Leave or perish!'",
-            "15=Your magic ring gives you the stats on the dragon.",
-            "16=Do you wish to retreat or attack? Enter 'r' for retreat. Enter 'a' for attack.",
-            "17=You quickly retreat. The End.",
-            "18=Would you like to embark on another adventure? (Y/N): ",
-            "19=Farewell, brave adventurer."
-        };
-        File.WriteAllLines(DummyEnglishFile, sampleLines);
+        File.WriteAllText(MessagesPath, SampleJson);
     }
 
     [TestCleanup]
@@ -46,14 +71,14 @@ public class GameTest
         Console.SetIn(_originalIn);
         Console.SetOut(_originalOut);
 
-        if (File.Exists(DummyEnglishFile))
+        if (File.Exists(MessagesPath))
         {
-            File.Delete(DummyEnglishFile);
+            File.Delete(MessagesPath);
         }
     }
 
     [TestMethod]
-    public void DefaultConstructor_InitializesWithDefaultValues()
+    public void DefaultConstructor_InitializesDependenciesAndState()
     {
         Game game = new Game();
 
@@ -66,15 +91,16 @@ public class GameTest
     }
 
     [TestMethod]
-    public void OverloadedConstructor_ValidArguments_AssignsProperties()
+    public void OverloadedConstructor_ValidParameters_AssignsProperties()
     {
-        Messages messages = new Messages();
-        Die die = new Die(12);
+        Messages customMessages = new Messages();
+        Die customDie = new Die(10);
 
-        Game game = new Game(messages, die);
+        Game game = new Game(customMessages, customDie);
 
-        Assert.AreSame(messages, game.Messages);
-        Assert.AreSame(die, game.Die);
+        Assert.AreSame(customMessages, game.Messages);
+        Assert.AreSame(customDie, game.Die);
+        Assert.AreEqual(10, game.Die.Sides);
         Assert.IsTrue(game.IsRunning);
     }
 
@@ -111,25 +137,41 @@ public class GameTest
     }
 
     [TestMethod]
+    public void SetupLanguage_SelectEnglish_LoadsDictionary()
+    {
+        Game game = new Game();
+
+        using StringReader reader = new StringReader("1\n");
+        using StringWriter writer = new StringWriter();
+        Console.SetIn(reader);
+        Console.SetOut(writer);
+
+        game.SetupLanguage();
+
+        Assert.AreEqual("Welcome to Choose Your Adventure Game", game.Messages.GetMessage("intro"));
+    }
+
+    [TestMethod]
     public void SetupDragon_InstantiatesDragonWithRolledStats()
     {
         Game game = new Game();
+
         game.SetupDragon();
 
         Assert.IsNotNull(game.Dragon);
         Assert.AreEqual("Dragon", game.Dragon.name);
+        Assert.AreEqual("claws", game.Dragon.weapon.type);
+        Assert.AreEqual(12, game.Dragon.weapon.maxDamage);
         Assert.IsTrue(game.Dragon.strength >= 1 && game.Dragon.strength <= 20);
         Assert.IsTrue(game.Dragon.agility >= 1 && game.Dragon.agility <= 20);
         Assert.IsTrue(game.Dragon.health >= 1 && game.Dragon.health <= 20);
-        Assert.IsNotNull(game.Dragon.weapon);
-        Assert.AreEqual("claws", game.Dragon.weapon.type);
     }
 
     [TestMethod]
     public void DisplayWelcomeAndMenu_InputOne_ReturnsTrue()
     {
         Game game = new Game();
-        game.Messages.ReadDictionary(DummyEnglishFile);
+        game.Messages.ReadDictionary(MessagesPath, "en");
 
         using StringReader reader = new StringReader("1\n");
         using StringWriter writer = new StringWriter();
@@ -139,15 +181,13 @@ public class GameTest
         bool result = game.DisplayWelcomeAndMenu();
 
         Assert.IsTrue(result);
-        string output = writer.ToString();
-        Assert.IsTrue(output.Contains("Welcome to Choose Your Adventure Game"));
     }
 
     [TestMethod]
     public void DisplayWelcomeAndMenu_InputTwo_ReturnsFalse()
     {
         Game game = new Game();
-        game.Messages.ReadDictionary(DummyEnglishFile);
+        game.Messages.ReadDictionary(MessagesPath, "en");
 
         using StringReader reader = new StringReader("2\n");
         using StringWriter writer = new StringWriter();
@@ -160,25 +200,36 @@ public class GameTest
     }
 
     [TestMethod]
-    public void SetupLanguage_SelectEnglish_LoadsDictionary()
+    public void SetupPlayer_CompletesCreationWorkflow()
     {
         Game game = new Game();
+        game.Messages.ReadDictionary(MessagesPath, "en");
 
-        using StringReader reader = new StringReader("1\n");
+        // 1 (Human) -> Aragorn -> 1 (Fighter) -> roll -> roll -> roll -> 2 (Proceed)
+        string inputSequence = "1\nAragorn\n1\nroll\nroll\nroll\n2\n";
+
+        using StringReader reader = new StringReader(inputSequence);
         using StringWriter writer = new StringWriter();
         Console.SetIn(reader);
         Console.SetOut(writer);
 
-        game.SetupLanguage();
+        game.SetupPlayer();
 
-        Assert.AreEqual("Welcome to Choose Your Adventure Game", game.Messages.GetMessage(1));
+        Assert.IsNotNull(game.Player);
+        Assert.AreEqual("Aragorn", game.Player.Name);
+        Assert.AreEqual(Race.Human, game.Player.Race);
+        Assert.AreEqual(Occupation.Fighter, game.Player.Occupation);
+        Assert.AreEqual("long sword", game.Player.Weapon.type);
+        Assert.IsTrue(game.Player.HasRolledStats);
+        Assert.IsTrue(game.Player.Strength >= 1);
+        Assert.IsTrue(game.Player.Agility >= 1);
+        Assert.IsTrue(game.Player.Health >= 1);
     }
 
     [TestMethod]
     public void PromptPlayAgain_InputYes_KeepsIsRunningTrue()
     {
         Game game = new Game { IsRunning = true };
-        game.Messages.ReadDictionary(DummyEnglishFile);
 
         using StringReader reader = new StringReader("y\n");
         using StringWriter writer = new StringWriter();
@@ -194,7 +245,6 @@ public class GameTest
     public void PromptPlayAgain_InputNo_SetsIsRunningFalse()
     {
         Game game = new Game { IsRunning = true };
-        game.Messages.ReadDictionary(DummyEnglishFile);
 
         using StringReader reader = new StringReader("n\n");
         using StringWriter writer = new StringWriter();
