@@ -10,8 +10,10 @@ public class Game
     public Die Die { get; set; }
     public bool IsRunning { get; set; }
 
-    private const string MessagesFilePath = "game_messages.json";
-
+    private static readonly string MessagesFilePath = Path.Combine(
+    AppContext.BaseDirectory,
+    "Dialogue.json"
+    );
     /// <summary>
     /// Default constructor initializing core dependencies.
     /// </summary>
@@ -102,13 +104,18 @@ public class Game
             _ => "en"
         };
 
-        try
+       try
         {
             Messages.ReadDictionary(MessagesFilePath, languageCode);
         }
         catch (Exception ex)
         {
-            ConsoleDisplayAndInput.PrintStoryGreen($"\n[Notice: Language dictionary not loaded ({ex.Message}). Continuing with defaults.]");
+        // Print the real error and wait so it is not erased by SafeClear()
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"\n[Failed to load {MessagesFilePath}]: {ex.Message}");
+        Console.ResetColor();
+        Console.WriteLine("Press any key to continue...");
+        Console.ReadKey();
         }
     }
 
@@ -154,22 +161,23 @@ public class Game
         Occupation chosenOccupation = PromptOccupation();
 
         // 4. Instantiate Player
-        Player = new Player(name, chosenRace, chosenOccupation);
+        Player = new Player(name, chosenRace, chosenOccupation, Messages);
 
         // 5. Roll stats interactively with prompts from JSON
         ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_strength"));
         Console.Write("> ");
         ConsoleDisplayAndInput.WaitForRoll();
+        Player.RollStrength();
 
         ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_agility"));
         Console.Write("> ");
         ConsoleDisplayAndInput.WaitForRoll();
+        Player.RollAgility();
 
         ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_health"));
         Console.Write("> ");
         ConsoleDisplayAndInput.WaitForRoll();
-
-        Player.RollInitialStats();
+        Player.RollHealth();
 
         // 6. Post-roll review & branch ("choice_stats_adventure")
         while (true)
@@ -286,13 +294,50 @@ public class Game
 
             if (combatChoice == 'a')
             {
-                Combat combat = new Combat(Player, Dragon);
-                combat.StartBattle();
+                Combat combat = new Combat(Player, Dragon, Messages);
+                combat.PlayerAttacksDragonSequence();
                 return true;
             }
         }
     }
+/// <summary>
+    /// Displays the localized end game condition per the End Game Activity Diagram.
+    /// </summary>
+    public void DisplayEndGame(string condition)
+    {
+        Console.WriteLine();
+        switch (condition)
+        {
+            case "dragon_defeated":
+                string dragonDefeatedText = Messages.GetMessage("endgame_dragon_defeated");
+                if (string.IsNullOrWhiteSpace(dragonDefeatedText) || dragonDefeatedText.StartsWith("["))
+                {
+                    dragonDefeatedText = "With the dragon vanquished... The End.";
+                }
+                ConsoleDisplayAndInput.PrintStoryGreen(dragonDefeatedText);
+                break;
 
+            case "player_defeated":
+                string playerDefeatedText = Messages.GetMessage("endgame_player_defeated");
+                if (string.IsNullOrWhiteSpace(playerDefeatedText) || playerDefeatedText.StartsWith("["))
+                {
+                    playerDefeatedText = "The dragon laughs as your eyesight fades... The End.";
+                }
+                ConsoleDisplayAndInput.PrintDragonRed(playerDefeatedText);
+                break;
+
+            case "retreat":
+            default:
+                string retreatText = Messages.GetMessage("endgame_retreat");
+                if (string.IsNullOrWhiteSpace(retreatText) || retreatText.StartsWith("["))
+                {
+                    retreatText = "You quickly retreat... The End.";
+                }
+                ConsoleDisplayAndInput.PrintStoryGreen(retreatText);
+                break;
+        }
+    }
+    
     /// <summary>
     /// Prompts the player to restart or exit.
     /// </summary>
