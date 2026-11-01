@@ -1,11 +1,20 @@
 ﻿using System;
 
-Console.WriteLine("=== Character Creator ===");
+// ======================================================================
+// Create Character Activity (per Appendix C and the Create Character diagram)
+// Order: race -> name -> occupation -> roll strength -> roll agility
+//        -> roll health -> menu (1. list stats / 2. proceed on adventure)
+// ======================================================================
 
+// ---------- Race ----------
+Race race = AskForEnum<Race>(
+    "What race of character do you want to be? Human, Elf, Dwarf or Halfling?");
+
+// ---------- Name ----------
 string name;
 do
 {
-    Console.Write("Name Your Character: ");
+    Console.WriteLine("\nWhat is the name of your character?");
     name = Console.ReadLine() ?? "";
 
     if (string.IsNullOrWhiteSpace(name))
@@ -15,87 +24,98 @@ do
 }
 while (string.IsNullOrWhiteSpace(name));
 
-Race race = AskForEnum<Race>(
-    "Choose your race: Elf, Human, Dwarf, Halfling"
-);
-
+// ---------- Occupation (this also sets the weapon) ----------
 Occupation occupation = AskForEnum<Occupation>(
-    "Choose your occupation: Fighter, Magician, Thief, Archer"
-);
+    "What is the occupation of your character? Fighter, magician, thief, or archer?");
 
 Player player = new Player(name, race, occupation);
 
-Console.WriteLine($"\nCharacter Created:{player.Name}");
-Console.WriteLine($"Race: {player.Race} | Occupation: {player.Occupation}");
+// ---------- Roll for strength, agility, then health ----------
+WaitForRoll("Next, we are going to roll for strength. Type 'roll'");
+player.RollStrength();
 
-while(true)
+WaitForRoll("Next, we will roll for agility. Type 'roll'");
+player.RollAgility();
+
+// Health must come after strength because it uses the strength modifier.
+WaitForRoll("Next, we will roll for health points. Type 'roll'");
+player.RollHealth();
+
+// ---------- Post-creation menu ----------
+bool creatingCharacter = true;
+
+while (creatingCharacter)
 {
-    Console.WriteLine("\nCommands: roll | stats | Continue | quit");
-    Console.Write("Enter a command: ");
+    Console.WriteLine(
+        "\nWhat would you like to do next? " +
+        "1. List character stats. 2. Proceed on an adventure. Type 1 or 2");
 
-    string command = (Console.ReadLine() ?? "")
-        .Trim()
-        .ToLowerInvariant();
+    string choice = (Console.ReadLine() ?? "").Trim();
 
-    switch (command)
+    switch (choice)
     {
-        case "roll":
-            if (player.HasRolledStats)
-            {
-                Console.WriteLine(
-                    "You have already rolled your stats. " +
-                    "Use 'stats' to view them.");
-            }
-            else
-            {
-                player.RollInitialStats();
-                Console.WriteLine(player.DisplayStats());
-            }
-            break;
-
-        case "stats":
+        case "1":
+            Console.WriteLine();
             Console.WriteLine(player.DisplayStats());
             break;
 
-        case "continue":
-            if (!player.HasRolledStats)
-            {
-                Console.WriteLine(
-                    "Roll your initial stats before continuing.");
-            }
-            else
-            {
-                Console.WriteLine(
-                    "Your character is ready for the next game step.");
-
-            }
+        case "2":
+            // TODO: hand off to the Start Adventure activity (Game class).
+            // Placeholder: show the main adventure menu from Appendix D.
+            Console.WriteLine(
+                "\nYou are walking in the mountains. You see two paths, " +
+                "one leading north and higher into the mountains. " +
+                "The other path leads south and into the woods. " +
+                "Which do you take? Enter 'n' for North. Enter 's' for South. " +
+                "Enter 'e' for exit game.");
+            creatingCharacter = false;
             break;
 
-        case "quit":
-            Console.WriteLine("Goodbye!");
-            return;
-
         default:
-            Console.WriteLine(
-                "Unknown command. Enter roll, stats, continue, or quit.");
+            Console.WriteLine("Please type 1 or 2.");
             break;
     }
 }
 
+// ======================================================================
+// Helper methods
+// ======================================================================
+
+// Shows the prompt and waits until the player types 'roll'.
+static void WaitForRoll(string prompt)
+{
+    while (true)
+    {
+        Console.WriteLine($"\n{prompt}");
+
+        string input = (Console.ReadLine() ?? "").Trim().ToLowerInvariant();
+
+        if (input == "roll")
+        {
+            return;
+        }
+
+        Console.WriteLine("Please type 'roll'.");
+    }
+}
+
+// Asks until the player types the name of one of the enum values
+// (case-insensitive). Numbers such as "1" are not accepted.
 static T AskForEnum<T>(string prompt)
     where T : struct, Enum
 {
     while (true)
     {
         Console.WriteLine($"\n{prompt}");
-        Console.Write("Your choice: ");
 
-        string input = Console.ReadLine() ?? "";
+        string input = (Console.ReadLine() ?? "").Trim();
 
-        if (Enum.TryParse<T>(input, true, out T result) &&
-            Enum.IsDefined(typeof(T), result))
+        foreach (string enumName in Enum.GetNames(typeof(T)))
         {
-            return result;
+            if (string.Equals(enumName, input, StringComparison.OrdinalIgnoreCase))
+            {
+                return Enum.Parse<T>(enumName);
+            }
         }
 
         Console.WriteLine("That choice is not valid. Try again.");
