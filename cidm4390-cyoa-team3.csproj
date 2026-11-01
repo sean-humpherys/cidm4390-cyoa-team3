@@ -16,6 +16,9 @@
 
   <ItemGroup>
   <None Update="Sample.txt" CopyToOutputDirectory="PreserveNewest" />
+  <Content Include="Dialogue.json">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
 </ItemGroup>
 
 </Project>

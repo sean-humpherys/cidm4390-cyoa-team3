@@ -6,6 +6,10 @@
 //        -> roll health -> menu (1. list stats / 2. proceed on adventure)
 // ======================================================================
 
+//Program entry point delegating executiion to the main Game controller
+Game game = new Game();
+game.Start();
+
 // ---------- Race ----------
 Race race = AskForEnum<Race>(
     "What race of character do you want to be? Human, Elf, Dwarf or Halfling?");
