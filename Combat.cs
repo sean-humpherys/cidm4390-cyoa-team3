@@ -1,8 +1,12 @@
-// Combat.cs
-// No namespace needed: this project uses top-level statements,
-// so every .cs file in the root folder can see the other classes.
-
 using System;
+
+// How a battle ended. Game.cs uses this to decide what happens next.
+public enum CombatResult
+{
+    DragonDefeated,   // -> End Game (victory)
+    PlayerDefeated,   // -> End Game (defeat)
+    PlayerRetreated   // -> back to the mountain exploration loop / main menu
+}
 
 public class Combat
 {
@@ -10,7 +14,7 @@ public class Combat
     private Player player { get; set; }
     private Dragon dragon { get; set; }
 
-    // Localized text (Dialogue.json). If none is passed in, the dragon's
+    // Localized text (Dialogue.json).
     // Messages object is used. If neither exists, English fallback text is shown.
     private Messages? messages { get; set; }
 
@@ -25,17 +29,19 @@ public class Combat
         this.messages = messages ?? dragon.Messages;
     }
 
-    // =====================================================================
+    // BATTLE
+    public CombatResult Battle()
+    {
+        return PlayerAttacksDragonSequence();
+    }
+
     // PLAYER ATTACKS DRAGON SEQUENCE
     // Runs the full loop: player attacks -> dragon attacks -> retreat/attack
-    // prompt. Returns when the dragon is defeated, the player is defeated,
-    // or the player retreats.
-    // =====================================================================
-    public void PlayerAttacksDragonSequence()
+    // prompt. Returns a CombatResult when the dragon is defeated, the player
+    // is defeated, or the player retreats.
+    public CombatResult PlayerAttacksDragonSequence()
     {
-        bool keepFighting = true;
-
-        while (keepFighting)
+        while (true)
         {
             // ---------- Player's turn ----------
             Console.WriteLine();
@@ -68,8 +74,9 @@ public class Combat
                         "{dragonName} successfully defends your attack.",
                         ("{dragonName}", dragon.name)));
 
-                    // Dragon's random taunt ({characterRace} is filled in by Dragon)
-                    Console.WriteLine(dragon.MissedMeTaunt(player.Race.ToString()));
+                    // Dragon taunt is rendered in red ({characterRace} is filled in by Dragon)
+                    ConsoleDisplayAndInput.PrintDragonRed(
+                        dragon.MissedMeTaunt(player.Race.ToString()));
                 }
                 else
                 {
@@ -87,15 +94,21 @@ public class Combat
 
                     if (dragon.health <= 0)
                     {
+                        // Final exclamation first, then the ending narrative in green.
                         Console.WriteLine(GetText(
                             "dragon_defeated_true",
                             "With the last words of 'Arggg!', you have defeated the dragon."));
-                        // Game should transition to the "End Game" activity.
-                        return;
+
+                        ConsoleDisplayAndInput.PrintStoryGreen(GetText(
+                            "endgame_dragon_defeated",
+                            "With the dragon vanquished, you collect the horde of gold, " +
+                            "return home, rich and famous. The End."));
+
+                        return CombatResult.DragonDefeated;
                     }
 
-                    // Dragon still alive: random sarcastic reply
-                    Console.WriteLine(dragon.WasHitTaunt());
+                    // Dragon still alive: random sarcastic reply, in red
+                    ConsoleDisplayAndInput.PrintDragonRed(dragon.WasHitTaunt());
                 }
             }
             else
@@ -112,25 +125,25 @@ public class Combat
 
             if (player.Health <= 0)
             {
-                // Game should transition to the "End Game" activity.
-                return;
+                // Ending text was already printed by DragonAttacksPlayerSequence.
+                return CombatResult.PlayerDefeated;
             }
 
             // ---------- Retreat or keep attacking? ----------
-            keepFighting = AskPlayerToContinue();
-        }
+            if (!AskPlayerToContinue())
+            {
+                // Player retreated: no changes to player health or stats.
+                ConsoleDisplayAndInput.PrintStoryGreen(GetText(
+                    "player_retreat",
+                    "You hastily retreat licking your wounds."));
 
-        // Player retreated
-        Console.WriteLine(GetText(
-            "player_retreat",
-            "You hastily retreat licking your wounds."));
-        // Control returns to Game, which displays the main menu.
+                return CombatResult.PlayerRetreated;
+            }
+        }
     }
 
-    // =====================================================================
     // DRAGON ATTACKS PLAYER SEQUENCE
     // Same logic as the player's attack, with the roles reversed.
-    // =====================================================================
     public void DragonAttacksPlayerSequence()
     {
         Console.WriteLine();
@@ -172,10 +185,16 @@ public class Combat
 
                 if (player.Health <= 0)
                 {
+                    // Final exclamation first, then the ending narrative in green.
                     Console.WriteLine(GetText(
                         "player_defeated_true",
                         "With the last words of 'Oh no!', you have been defeated by the dragon."));
-                    // Game should transition to the "End Game" activity.
+
+                    ConsoleDisplayAndInput.PrintStoryGreen(GetText(
+                        "endgame_player_defeated",
+                        "The dragon laughs as your eyesight fades. You are defeated. " +
+                        "Your family mourns their loss. The End."));
+
                     return;
                 }
 
@@ -192,13 +211,8 @@ public class Combat
         }
     }
 
-    // =====================================================================
     // Helper methods
-    // =====================================================================
-
-    // Gets a message from Dialogue.json (through Messages) and fills in its
-    // {placeholders}. If there is no Messages object, the English fallback
-    // text is used instead so Combat still works on its own.
+    // Gets a message from Dialogue.json (through Messages)
     private string GetText(
         string key,
         string englishFallback,
@@ -216,16 +230,12 @@ public class Combat
         return text;
     }
 
-    // Die (DieRoll.cs) takes the side count in its constructor and Roll() has
-    // no parameters, so create a Die with the sides we need and roll it.
     private int RollDie(int sides)
     {
         Die die = new Die(sides);
         return die.Roll();
     }
 
-    // Displays the ASCII weapon image that matches the player's occupation.
-    // Occupation is an enum, so convert it to text before comparing.
     private void DisplayWeaponImage()
     {
         switch (player.Occupation.ToString().ToLower())
