@@ -33,8 +33,8 @@ public class ConsoleDisplayAndInputTests
     [TestMethod]
     public void AskForName_ReturnsText_AfterInvalidInputs()
     {
-        // Arrange: Simulates player entering an empty value, a value with a white-space, and "Hannah" text
-        Console.SetIn(new StringReader("\n \nHannah\n"));
+        // Arrange: Simulates player entering an empty value, a value with a white-space, a value with a numeric value, a sole numeric value, and "Hannah" text
+        Console.SetIn(new StringReader("\n \nOlaf2\n23\nHannah\n"));
 
         // Act: Calls AskForName()
         string result = ConsoleDisplayAndInput.AskForName();
@@ -71,4 +71,5 @@ public class ConsoleDisplayAndInputTests
         Assert.AreEqual("extra", reader3.ReadLine());
 
     }
+
 }
