@@ -72,4 +72,105 @@ public class ConsoleDisplayAndInputTests
 
     }
 
+    [TestMethod]
+    public void AskForChoice_ShowsErrorAndAsksAgain_AfterInvalidInput()
+    {
+        // Arrange: Simulates player entering a "9", then "2", and captures what is printed
+        Console.SetIn(new StringReader("9\n2\n"));
+        StringWriter output = new();
+        Console.SetOut(output);
+
+        // Act: Calls AskForChoice() with error message and question
+        int result = ConsoleDisplayAndInput.AskForChoice(1, 4, "Invalid choice", "Pick a number");
+
+        // Assert: Ensures 2 was returned and the error and question were printed
+        Assert.AreEqual(2, result);
+        StringAssert.Contains(output.ToString(), "Invalid choice");
+        StringAssert.Contains(output.ToString(), "Pick a number");
+
+    }
+
+
+    [TestMethod]
+    public void AskForLetter_ShowsErrorAndAsksAgain_AfterInvalidInput()
+    {
+        // Arrange: Simulates player entering "x" then "n" and captures what is printed
+         Console.SetIn(new StringReader("x\nn\n"));
+         StringWriter output = new();
+         Console.SetOut(output);
+
+        // Act: Calls AskForLetter() with error message and question
+         char result = ConsoleDisplayAndInput.AskForLetter("nse", "Invalid letter", "Which way?");
+
+        // Assert: Ensures "n" was returned and the error and question were printed
+         Assert.AreEqual('n', result);
+         StringAssert.Contains(output.ToString(), "Invalid letter");
+         StringAssert.Contains(output.ToString(), "Which way?");
+    }
+    
+    [TestMethod]
+    public void AskForName_ShowsErrorAndAsksAgain_AfterNameWithInputs()
+    {
+        // Arrange: Simulates player entering "Olaf2" then "Hannah", and captures what is printed
+         Console.SetIn(new StringReader("Olaf2\nHannah\n"));
+         StringWriter output = new();
+         Console.SetOut(output);
+
+        // Act: Calls AskForName() with error message and question
+         string result = ConsoleDisplayAndInput.AskForName("Invalid name", "What is your name?");
+
+        // Assert: Ensures "Hannah" was returned and the error and question were printed
+         Assert.AreEqual("Hannah", result);
+         StringAssert.Contains(output.ToString(), "Invalid name");
+    }
+
+    [TestMethod]
+    public void AskForName_ShowsErrorAndAsksAgain_AfterBlankName()
+    {
+        // Arrange: Simulates player entering only white-spaces, then "Hannah", then captures what is printed
+        Console.SetIn(new StringReader("   \nHannah\n"));
+        StringWriter output = new();
+        Console.SetOut(output);
+
+        // Act: Calls AskForName() with error message and question
+        string result = ConsoleDisplayAndInput.AskForName("Invalid name", "What is your name?");
+
+        // Assert: Ensures "Hannah" was returned and the error was printed
+        Assert.AreEqual("Hannah", result);
+        StringAssert.Contains(output.ToString(), "Invalid name");
+    }
+
+    public void WaitForRoll_ShowsErrorAndAsksAgain_AfterInvalidInput()
+    {
+        // Arrange: Simulates player entering "extra", "roll", and "jump", and captures what is printed
+        StringReader reader1 = new StringReader("extra\nroll\njump\n");
+        Console.SetIn(reader1);
+        StringWriter output = new();
+        Console.SetOut(output);
+
+        // Act: Calls WaitForRoll() with error message and question
+        ConsoleDisplayAndInput.WaitForRoll("Please type roll", "Type roll");
+
+
+        // Assert: Ensures the method stopped at "roll" and the error and question were printed
+        Assert.AreEqual("extra", reader1.ReadLine());
+        StringAssert.Contains(output.ToString(), "Please type roll");
+        StringAssert.Contains(output.ToString(), "Type roll");
+    }
+
+    [TestMethod]
+    public void AskForChoice_PrintsNothing_WhenNoMessagesAreGiven()
+    {
+        // Arrange: Simulates player entering a "9", then "2", and captures what is printed
+        Console.SetIn(new StringReader("9\n2\n"));
+        StringWriter output = new();
+        Console.SetOut(output);
+
+        // Act: Calls AskForChoice() without error message or question
+        ConsoleDisplayAndInput.AskForChoice(1,4);
+
+        // Assert: Ensures nothing was printed
+        Assert.AreEqual("", output.ToString());
+    }
+
 }
