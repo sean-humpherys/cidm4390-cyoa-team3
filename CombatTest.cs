@@ -66,9 +66,7 @@ public class CombatTests
         Console.SetIn(originalIn);
     }
 
-    // ---------------------------------------------------------------
     // Helpers
-    // ---------------------------------------------------------------
 
     // Player.Strength and Player.Agility have private setters (they are set by
     // the dice rolls), so the tests use reflection to set exact values.
