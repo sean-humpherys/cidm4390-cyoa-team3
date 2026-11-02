@@ -10,7 +10,7 @@
 Game game = new Game();
 game.Start();
 
-// ---------- Race ----------
+/*// ---------- Race ----------
 Race race = AskForEnum<Race>(
     "What race of character do you want to be? Human, Elf, Dwarf or Halfling?");
 
@@ -124,4 +124,4 @@ static T AskForEnum<T>(string prompt)
 
         Console.WriteLine("That choice is not valid. Try again.");
     }
-}
+} */

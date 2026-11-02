@@ -11,9 +11,10 @@ public class Game
     public bool IsRunning { get; set; }
 
     private static readonly string MessagesFilePath = Path.Combine(
-    AppContext.BaseDirectory,
-    "Dialogue.json"
+        AppContext.BaseDirectory,
+        "Dialogue.json"
     );
+
     /// <summary>
     /// Default constructor initializing core dependencies.
     /// </summary>
@@ -74,7 +75,7 @@ public class Game
                 break;
             }
 
-            // 5. Replay Decision
+            // 5. Replay Decision (only reached when a run concludes)
             PromptPlayAgain();
         }
 
@@ -82,13 +83,13 @@ public class Game
     }
 
     /// <summary>
-    /// Prompts for language and loads the dictionary from game_messages.json.
+    /// Prompts for language and loads the dictionary from Dialogue.json.
     /// </summary>
     public void SetupLanguage()
     {
         SafeClear();
         ConsoleDisplayAndInput.PrintStoryGreen("==================================================");
-        ConsoleDisplayAndInput.PrintStoryGreen("     SELECT LANGUAGE / ELIGE IDIOMA / LANGUE      ");
+        ConsoleDisplayAndInput.PrintStoryGreen("      SELECT LANGUAGE / ELIGE IDIOMA / LANGUE     ");
         ConsoleDisplayAndInput.PrintStoryGreen("==================================================");
         ConsoleDisplayAndInput.PrintStoryGreen("1. English");
         ConsoleDisplayAndInput.PrintStoryGreen("2. Español");
@@ -104,18 +105,17 @@ public class Game
             _ => "en"
         };
 
-       try
+        try
         {
             Messages.ReadDictionary(MessagesFilePath, languageCode);
         }
         catch (Exception ex)
         {
-        // Print the real error and wait so it is not erased by SafeClear()
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"\n[Failed to load {MessagesFilePath}]: {ex.Message}");
-        Console.ResetColor();
-        Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"\n[Failed to load {MessagesFilePath}]: {ex.Message}");
+            Console.ResetColor();
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey();
         }
     }
 
@@ -168,16 +168,19 @@ public class Game
         Console.Write("> ");
         ConsoleDisplayAndInput.WaitForRoll();
         Player.RollStrength();
+        Console.WriteLine($"Strength rolled: {Player.Strength} (Modifier: {Player.StrengthModifier})");
 
         ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_agility"));
         Console.Write("> ");
         ConsoleDisplayAndInput.WaitForRoll();
         Player.RollAgility();
+        Console.WriteLine($"Agility rolled: {Player.Agility} (Modifier: {Player.AgilityModifier})");
 
         ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_health"));
         Console.Write("> ");
         ConsoleDisplayAndInput.WaitForRoll();
         Player.RollHealth();
+        Console.WriteLine($"Health Points rolled: {Player.Health}");
 
         // 6. Post-roll review & branch ("choice_stats_adventure")
         while (true)
@@ -233,6 +236,7 @@ public class Game
 
     /// <summary>
     /// Executes Mountain Exploration path, Dragon dialogue, Ring check, and Encounter branch.
+    /// Preserves player state when retreating mid-combat and loops back to mountain path.
     /// </summary>
     private bool ExploreMountains()
     {
@@ -265,42 +269,71 @@ public class Game
             if (pathChoice == 'n')
             {
                 ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_cardinal_north") + "\n");
-                break;
-            }
-        }
 
-        // Dragon Threat in Red ("dragon_intro")
-        string dragonIntroTemplate = Messages.GetMessage("dragon_intro");
-        string dragonWarning = dragonIntroTemplate.Replace("{dragonName}", Dragon.name);
-        ConsoleDisplayAndInput.PrintDragonRed(dragonWarning);
+                // Dragon Threat in Red ("dragon_intro")
+                string dragonIntroTemplate = Messages.GetMessage("dragon_intro");
+                string dragonWarning = dragonIntroTemplate.Replace("{dragonName}", Dragon.name);
+                ConsoleDisplayAndInput.PrintDragonRed(dragonWarning);
 
-        // Magic Ring gives dragon's stats ("ring")
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("ring"));
-        ConsoleDisplayAndInput.PrintStoryGreen(Dragon.DisplayStats());
+                // Magic Ring gives dragon's stats ("ring")
+                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("ring"));
+                ConsoleDisplayAndInput.PrintStoryGreen(Dragon.DisplayStats());
 
-        // Encounter Choice: Retreat or Attack ("choice_retreat_attack")
-        while (true)
-        {
-            ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_retreat_attack"));
-            Console.Write("> ");
+                // Pre-Combat Choice: Retreat or Attack
+                bool backToPaths = false;
 
-            char combatChoice = ConsoleDisplayAndInput.AskForLetter("ra");
+                // Encounter Choice: Retreat or Attack ("choice_retreat_attack")
+                while (true)
+                {
+                    ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_retreat_attack"));
+                    Console.Write("> ");
 
-            if (combatChoice == 'r')
-            {
-                ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("endgame_retreat"));
-                return true;
-            }
+                    char combatChoice = ConsoleDisplayAndInput.AskForLetter("ra");
 
-            if (combatChoice == 'a')
-            {
-                Combat combat = new Combat(Player, Dragon, Messages);
-                combat.PlayerAttacksDragonSequence();
-                return true;
+                    if (combatChoice == 'r')
+                    {
+                        // Pre-fight retreat ends this run cleanly
+                        DisplayEndGame("retreat");
+                        return true; // Signals run ended cleanly -> advances to PromptPlayAgain()
+                    }
+
+                    if (combatChoice == 'a')
+                    {
+                        Combat combat = new Combat(Player, Dragon, Messages);
+                        combat.PlayerAttacksDragonSequence();
+
+                        // Check post-combat health states to determine what occurred:
+                        if (Player.Health > 0 && Dragon.health > 0)
+                        {
+                            // Both alive -> Player chose 'r' mid-combat.
+                            // Break out of encounter loop and return to the path fork.
+                            backToPaths = true;
+                            break;
+                        }
+
+                        if (Dragon.health <= 0)
+                        {
+                            DisplayEndGame("dragon_defeated");
+                            return true;
+                        }
+
+                        if (Player.Health <= 0)
+                        {
+                            DisplayEndGame("player_defeated");
+                            return true;
+                        }
+                    }
+                }
+
+                if (backToPaths)
+                {
+                    continue; // Loops back to choice_cardinal while keeping current Player instance and health
+                }
             }
         }
     }
-/// <summary>
+
+    /// <summary>
     /// Displays the localized end game condition per the End Game Activity Diagram.
     /// </summary>
     public void DisplayEndGame(string condition)
@@ -309,35 +342,20 @@ public class Game
         switch (condition)
         {
             case "dragon_defeated":
-                string dragonDefeatedText = Messages.GetMessage("endgame_dragon_defeated");
-                if (string.IsNullOrWhiteSpace(dragonDefeatedText) || dragonDefeatedText.StartsWith("["))
-                {
-                    dragonDefeatedText = "With the dragon vanquished... The End.";
-                }
-                ConsoleDisplayAndInput.PrintStoryGreen(dragonDefeatedText);
+                ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("endgame_dragon_defeated"));
                 break;
 
             case "player_defeated":
-                string playerDefeatedText = Messages.GetMessage("endgame_player_defeated");
-                if (string.IsNullOrWhiteSpace(playerDefeatedText) || playerDefeatedText.StartsWith("["))
-                {
-                    playerDefeatedText = "The dragon laughs as your eyesight fades... The End.";
-                }
-                ConsoleDisplayAndInput.PrintDragonRed(playerDefeatedText);
+                ConsoleDisplayAndInput.PrintDragonRed(Messages.GetMessage("endgame_player_defeated"));
                 break;
 
             case "retreat":
             default:
-                string retreatText = Messages.GetMessage("endgame_retreat");
-                if (string.IsNullOrWhiteSpace(retreatText) || retreatText.StartsWith("["))
-                {
-                    retreatText = "You quickly retreat... The End.";
-                }
-                ConsoleDisplayAndInput.PrintStoryGreen(retreatText);
+                ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("endgame_retreat"));
                 break;
         }
     }
-    
+
     /// <summary>
     /// Prompts the player to restart or exit.
     /// </summary>
