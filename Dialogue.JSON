@@ -274,5 +274,29 @@
     "en": "The dragon laughs as your eyesight fades... The End.",
     "fr": "Le dragon rit alors que votre vue s'estompe... La Fin.",
     "es": "El dragón se ríe mientras tu vista se desvanece... El Fin."
+  },
+  "invalid_choice":
+  {
+    "en": "Invalid choice. Please enter one of the numbers shown.",
+    "fr": "Choix invalide. Veuillez entrer l'un des numéros affichés.",
+    "es": "Elección inválida. Por favor, ingrese uno de los números mostrados."
+  },
+  "invalid_letter":
+  {
+    "en": "Invalid choice. Please enter one of the letters shown.",
+    "fr": "Choix invalide. Veuillez entrer l'une des lettres affichées.",
+    "es": "Elección inválida. Por favor, ingrese una de las letras mostradas."
+  },
+  "invalid_name":
+  {
+    "en": "Invalid name. Please enter a name that is not blank and has no numbers.",
+    "fr": "Nom invalide. Veuillez entrer un nom qui n'est pas vide et qui ne contient pas de chiffres.",
+    "es": "Nombre inválido. Por favor, ingrese un nombre que no esté en blanco y que no tenga números."
+  },
+  "invalid_roll":
+  {
+    "en": "Please type 'roll'.",
+    "fr": "Veuillez taper 'roll'.",
+    "es": "Por favor, escriba 'roll'."
   }
 }
