@@ -259,21 +259,21 @@
   },
   "endgame_retreat":
   {
-    "en": "You quickly retreat... The End.",
-    "fr": "Vous vous retirez rapidement... La Fin.",
-    "es": "Te retiras rápidamente... El Fin."
+    "en": "You quickly retreat. You come home poor but alive to adventure another day. The End.",
+    "fr": "Vous vous retirez rapidement. Vous rentrez chez vous pauvre mais vivant pour vivre une autre aventure un autre jour. La Fin.",
+    "es": "Te retiras rápidamente. Regresas a casa pobre pero vivo para aventurarte otro día. El Fin."
   },
   "endgame_dragon_defeated":
   {
-    "en": "With the dragon defeated... The End.",
-    "fr": "Avec le dragon vaincu... La Fin.",
-    "es": "Con el dragón derrotado... El Fin."
+    "en": "With the dragon vanquished, you collect the horde of gold, return home, rich and famous. The End.",
+    "fr": "Avec le dragon vaincu, vous collectionnez la horde d'or, retournez chez vous, riche et célèbre. La Fin.",
+    "es": "Con el dragón derrotado, recoges la horda de oro, regresas a casa, rico y famoso. El Fin."
   },
   "endgame_player_defeated":
   {
-    "en": "The dragon laughs as your eyesight fades... The End.",
-    "fr": "Le dragon rit alors que votre vue s'estompe... La Fin.",
-    "es": "El dragón se ríe mientras tu vista se desvanece... El Fin."
+    "en": "The dragon laughs as your eyesight fades. You are defeated. Your family mourns their loss. The End.",
+    "fr": "Le dragon rit alors que votre vue s'estompe. Vous êtes vaincu. Votre famille pleure leur perte. La Fin.",
+    "es": "El dragón se ríe mientras tu vista se desvanece. Has sido derrotado. Tu familia llora su pérdida. El Fin."
   },
   "invalid_choice":
   {
