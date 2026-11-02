@@ -64,8 +64,8 @@ public static class ConsoleDisplayAndInput
             // White-space characters are removed from both ends of answer (skipped if answer is null)
             input = Console.ReadLine()?.Trim();
             
-        // Player is asked again if their answer is null, an empty string, or made up of white-space characters
-        } while(string.IsNullOrWhiteSpace(input));
+        // Player is asked again if their answer is null, an empty string, made up of white-space characters, or has any numeric characters
+        } while(string.IsNullOrWhiteSpace(input) || input.Any(char.IsDigit));
 
         // input is non-blank and trimmed
         return input;
