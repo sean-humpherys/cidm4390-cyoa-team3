@@ -150,8 +150,8 @@ public class Game
     /// </summary>
     public void SetupDragon()
     {
-        Dragon = new Dragon("Dragon", Messages);
-        Dragon.InitializeStats(Die);
+    Dragon = new Dragon(Messages);
+    Dragon.InitializeStats(Die);
     }
 
     /// <summary>
