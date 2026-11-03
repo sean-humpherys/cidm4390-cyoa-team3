@@ -91,12 +91,16 @@ public class Game
         ConsoleDisplayAndInput.PrintStoryGreen("==================================================");
         ConsoleDisplayAndInput.PrintStoryGreen("      SELECT LANGUAGE / ELIGE IDIOMA / LANGUE     ");
         ConsoleDisplayAndInput.PrintStoryGreen("==================================================");
-        ConsoleDisplayAndInput.PrintStoryGreen("1. English");
-        ConsoleDisplayAndInput.PrintStoryGreen("2. Español");
-        ConsoleDisplayAndInput.PrintStoryGreen("3. Français");
-        Console.Write("\nEnter choice / Elija opción / Choix (1-3): ");
+        
+        string langPrompt = "1. English\n2. Español\n3. Français\n\nEnter choice / Elija opción / Choix (1-3): ";
+        Console.Write(langPrompt);
 
-        int choice = ConsoleDisplayAndInput.AskForChoice(1, 3);
+        int choice = ConsoleDisplayAndInput.AskForChoice(
+            1, 
+            3, 
+            "Invalid choice. / Opción no válida. / Choix invalide.", 
+            langPrompt
+        );
 
         string languageCode = choice switch
         {
@@ -120,16 +124,24 @@ public class Game
     }
 
     /// <summary>
-    /// Displays title and main menu. Returns true to create character; false to exit game.
+    /// Displays title and main menu. Passes invalid_choice and choice_create_exit for re-prompting.
     /// </summary>
     public bool DisplayWelcomeAndMenu()
     {
         SafeClear();
         ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("intro") + "\n");
-        ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("choice_create_exit"));
+
+        string menuPrompt = Messages.GetMessage("choice_create_exit");
+        ConsoleDisplayAndInput.PrintStoryGreen(menuPrompt);
         Console.Write("> ");
 
-        int choice = ConsoleDisplayAndInput.AskForChoice(1, 2);
+        int choice = ConsoleDisplayAndInput.AskForChoice(
+            1, 
+            2, 
+            Messages.GetMessage("invalid_choice"), 
+            menuPrompt
+        );
+
         return choice == 1;
     }
 
@@ -144,6 +156,7 @@ public class Game
 
     /// <summary>
     /// Coordinates character creation: Name, Race, Occupation, Stat Rolls, and Review.
+    /// Passes localized error messages and questions into each console input call.
     /// </summary>
     public void SetupPlayer()
     {
@@ -153,9 +166,13 @@ public class Game
         Race chosenRace = PromptRace();
 
         // 2. Name input with validation ("character_name")
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_name"));
+        string namePrompt = Messages.GetMessage("character_name");
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + namePrompt);
         Console.Write("> ");
-        string name = ConsoleDisplayAndInput.AskForName();
+        string name = ConsoleDisplayAndInput.AskForName(
+            Messages.GetMessage("invalid_name"), 
+            namePrompt
+        );
 
         // 3. Occupation Selection ("character_occupation")
         Occupation chosenOccupation = PromptOccupation();
@@ -163,31 +180,50 @@ public class Game
         // 4. Instantiate Player
         Player = new Player(name, chosenRace, chosenOccupation, Messages);
 
-        // 5. Roll stats interactively with prompts from JSON
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_strength"));
+        // 5. Roll stats interactively with validation & re-prompting
+        string strPrompt = Messages.GetMessage("character_strength");
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + strPrompt);
         Console.Write("> ");
-        ConsoleDisplayAndInput.WaitForRoll();
+        ConsoleDisplayAndInput.WaitForRoll(
+            Messages.GetMessage("invalid_roll"), 
+            strPrompt
+        );
         Player.RollStrength();
         Console.WriteLine($"Strength rolled: {Player.Strength} (Modifier: {Player.StrengthModifier})");
 
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_agility"));
+        string agiPrompt = Messages.GetMessage("character_agility");
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + agiPrompt);
         Console.Write("> ");
-        ConsoleDisplayAndInput.WaitForRoll();
+        ConsoleDisplayAndInput.WaitForRoll(
+            Messages.GetMessage("invalid_roll"), 
+            agiPrompt
+        );
         Player.RollAgility();
         Console.WriteLine($"Agility rolled: {Player.Agility} (Modifier: {Player.AgilityModifier})");
 
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_health"));
+        string hpPrompt = Messages.GetMessage("character_health");
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + hpPrompt);
         Console.Write("> ");
-        ConsoleDisplayAndInput.WaitForRoll();
+        ConsoleDisplayAndInput.WaitForRoll(
+            Messages.GetMessage("invalid_roll"), 
+            hpPrompt
+        );
         Player.RollHealth();
         Console.WriteLine($"Health Points rolled: {Player.Health}");
 
         // 6. Post-roll review & branch ("choice_stats_adventure")
+        string postPrompt = Messages.GetMessage("choice_stats_adventure");
         while (true)
         {
-            ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_stats_adventure"));
+            ConsoleDisplayAndInput.PrintStoryGreen("\n" + postPrompt);
             Console.Write("> ");
-            int postChoice = ConsoleDisplayAndInput.AskForChoice(1, 2);
+
+            int postChoice = ConsoleDisplayAndInput.AskForChoice(
+                1, 
+                2, 
+                Messages.GetMessage("invalid_choice"), 
+                postPrompt
+            );
 
             if (postChoice == 1)
             {
@@ -200,13 +236,21 @@ public class Game
         }
     }
 
+    /// <summary>
+    /// Prompts for race selection and reprompts with options list on invalid input.
+    /// </summary>
     private Race PromptRace()
     {
-        ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("character_initial"));
-        ConsoleDisplayAndInput.PrintStoryGreen("1. Human | 2. Elf | 3. Dwarf | 4. Halfling");
+        string racePrompt = Messages.GetMessage("character_initial") + "\n1. Human | 2. Elf | 3. Dwarf | 4. Halfling";
+        ConsoleDisplayAndInput.PrintStoryGreen(racePrompt);
         Console.Write("> ");
 
-        int choice = ConsoleDisplayAndInput.AskForChoice(1, 4);
+        int choice = ConsoleDisplayAndInput.AskForChoice(
+            1, 
+            4, 
+            Messages.GetMessage("invalid_choice"), 
+            racePrompt
+        );
 
         return choice switch
         {
@@ -217,13 +261,21 @@ public class Game
         };
     }
 
+    /// <summary>
+    /// Prompts for occupation selection and reprompts with options list on invalid input.
+    /// </summary>
     private Occupation PromptOccupation()
     {
-        ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("character_occupation"));
-        ConsoleDisplayAndInput.PrintStoryGreen("1. Fighter | 2. Magician | 3. Thief | 4. Archer");
+        string occPrompt = Messages.GetMessage("character_occupation") + "\n1. Fighter | 2. Magician | 3. Thief | 4. Archer";
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + occPrompt);
         Console.Write("> ");
 
-        int choice = ConsoleDisplayAndInput.AskForChoice(1, 4);
+        int choice = ConsoleDisplayAndInput.AskForChoice(
+            1, 
+            4, 
+            Messages.GetMessage("invalid_choice"), 
+            occPrompt
+        );
 
         return choice switch
         {
@@ -236,7 +288,7 @@ public class Game
 
     /// <summary>
     /// Executes Mountain Exploration path, Dragon dialogue, Ring check, and Encounter branch.
-    /// Preserves player state when retreating mid-combat and loops back to mountain path.
+    /// Preserves player state when retreating mid-combat and reprompts on invalid letters.
     /// </summary>
     private bool ExploreMountains()
     {
@@ -250,10 +302,15 @@ public class Game
         // Path selection loop: North, South, or Exit
         while (true)
         {
-            ConsoleDisplayAndInput.PrintStoryGreen(Messages.GetMessage("choice_cardinal"));
+            string pathPrompt = Messages.GetMessage("choice_cardinal");
+            ConsoleDisplayAndInput.PrintStoryGreen(pathPrompt);
             Console.Write("> ");
 
-            char pathChoice = ConsoleDisplayAndInput.AskForLetter("nse");
+            char pathChoice = ConsoleDisplayAndInput.AskForLetter(
+                "nse", 
+                Messages.GetMessage("invalid_letter"), 
+                pathPrompt
+            );
 
             if (pathChoice == 'e')
             {
@@ -281,14 +338,19 @@ public class Game
 
                 // Pre-Combat Choice: Retreat or Attack
                 bool backToPaths = false;
+                string combatPrompt = Messages.GetMessage("choice_retreat_attack");
 
                 // Encounter Choice: Retreat or Attack ("choice_retreat_attack")
                 while (true)
                 {
-                    ConsoleDisplayAndInput.PrintStoryGreen("\n" + Messages.GetMessage("choice_retreat_attack"));
+                    ConsoleDisplayAndInput.PrintStoryGreen("\n" + combatPrompt);
                     Console.Write("> ");
 
-                    char combatChoice = ConsoleDisplayAndInput.AskForLetter("ra");
+                    char combatChoice = ConsoleDisplayAndInput.AskForLetter(
+                        "ra", 
+                        Messages.GetMessage("invalid_letter"), 
+                        combatPrompt
+                    );
 
                     if (combatChoice == 'r')
                     {
@@ -302,7 +364,7 @@ public class Game
                         Combat combat = new Combat(Player, Dragon, Messages);
                         combat.PlayerAttacksDragonSequence();
 
-                        // Check post-combat health states to determine what occurred:
+                        // Check post-combat health states:
                         if (Player.Health > 0 && Dragon.health > 0)
                         {
                             // Both alive -> Player chose 'r' mid-combat.
@@ -357,14 +419,19 @@ public class Game
     }
 
     /// <summary>
-    /// Prompts the player to restart or exit.
+    /// Prompts the player to restart or exit. Passes invalid_letter for validation.
     /// </summary>
     public void PromptPlayAgain()
     {
-        ConsoleDisplayAndInput.PrintStoryGreen("\nWould you like to embark on another adventure? (Y/N): ");
+        string playAgainPrompt = "Would you like to embark on another adventure? (Y/N): ";
+        ConsoleDisplayAndInput.PrintStoryGreen("\n" + playAgainPrompt);
         Console.Write("> ");
 
-        char choice = ConsoleDisplayAndInput.AskForLetter("yn");
+        char choice = ConsoleDisplayAndInput.AskForLetter(
+            "yn", 
+            Messages.GetMessage("invalid_letter"), 
+            playAgainPrompt
+        );
 
         if (choice != 'y')
         {
