@@ -1,8 +1,18 @@
 using System;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 
 public class Dragon
 {
+    private static readonly string[] DragonNames = new string[]
+    {
+        "Ignis",
+        "Vermithrax",
+        "Smaug",
+        "Fafnir",
+        "Balerion",
+        "Pyre",
+        "Cinder"
+    };
+
     // Properties strictly matching UML Class Diagram
     public string name { get; set; }
     public int strength { get; set; }
@@ -13,8 +23,18 @@ public class Dragon
     // Reference to the localization messages dictionary
     public Messages? Messages { get; set; }
 
-    
-    // Initializes Dragon with default weapon ("claws", 12, "##") and optional Messages service.
+    /// <summary>
+    /// Constructor that automatically picks a random name from DragonNames
+    /// and chains to the main constructor to ensure weapon initialization.
+    /// </summary>
+    public Dragon(Messages? messages = null)
+        : this(GetRandomName(), messages)
+    {
+    }
+
+    /// <summary>
+    /// Authoritative constructor initializing Dragon name, weapon, and Messages service.
+    /// </summary>
     public Dragon(string name, Messages? messages = null)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -25,6 +45,12 @@ public class Dragon
         this.name = name.Trim();
         this.Messages = messages;
         this.weapon = new Weapon("claws", 12, "##");
+    }
+
+    private static string GetRandomName()
+    {
+        Random random = new Random();
+        return DragonNames[random.Next(DragonNames.Length)];
     }
 
     public void InitializeStats(Die die)
@@ -43,9 +69,8 @@ public class Dragon
         health = hp;
     }
 
-    //Returns a defense taunt from the "dragon_taunt" message
-    //or returns a default fallback if Messages is not configured.
-    
+    // Returns a defense taunt from the "dragon_taunt" message
+    // or returns a default fallback if Messages is not configured.
     public string MissedMeTaunt()
     {
         if (Messages == null)
@@ -56,8 +81,6 @@ public class Dragon
         string message = Messages.GetMessage("dragon_taunt");
 
         // GetMessage returns a [Missing message ...] placeholder when the name is not found
-        // so language=neutral fallback is returned instead
-
         if (string.IsNullOrWhiteSpace(message) || message.StartsWith("["))
         {
             return "...";
@@ -66,15 +89,14 @@ public class Dragon
         return message;
     }
 
-    // Overload allowing race substitution if the dictionary string contains {race}.
-    
+    // Overload allowing race substitution if the dictionary string contains {characterRace}.
     public string MissedMeTaunt(string race)
     {
         string raw = MissedMeTaunt();
         return string.IsNullOrEmpty(raw) ? raw : raw.Replace("{characterRace}", race);
     }
-    //Resolves a localized reaction from the "dragon_defeated_false" message
-    // Avoids hardcoded English fallbacks  
+
+    // Resolves a localized reaction from the "dragon_defeated_false" message
     public string WasHitTaunt()
     {
         if (Messages == null)
@@ -82,10 +104,9 @@ public class Dragon
             return "!";
         }
 
-       string message = Messages.GetMessage("dragon_defeated_false");
+        string message = Messages.GetMessage("dragon_defeated_false");
 
-       // Language-neutral fallback if message name is not found
-       if (string.IsNullOrWhiteSpace(message) || message.StartsWith("["))
+        if (string.IsNullOrWhiteSpace(message) || message.StartsWith("["))
         {
             return "!";
         }

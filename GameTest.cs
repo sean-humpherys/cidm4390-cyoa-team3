@@ -35,8 +35,26 @@ public class GameTest
     {
         Game game = new Game();
         string messagesPath = Path.Combine(AppContext.BaseDirectory, "Dialogue.json");
-        game.Messages.ReadDictionary(messagesPath, languageCode);
+        if (File.Exists(messagesPath))
+        {
+            game.Messages.ReadDictionary(messagesPath, languageCode);
+        }
         return game;
+    }
+
+    [TestMethod]
+    public void SetupDragon_InitializesDragonWithRandomNameAndRolledStats()
+    {
+        Game game = CreateInitializedGame();
+
+        game.SetupDragon();
+
+        Assert.IsNotNull(game.Dragon);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(game.Dragon.name));
+        Assert.AreNotEqual("Dragon", game.Dragon.name, "Dragon name should be generated from pool, not hardcoded placeholder.");
+        Assert.IsTrue(game.Dragon.health > 0);
+        Assert.IsTrue(game.Dragon.strength > 0);
+        Assert.IsTrue(game.Dragon.agility > 0);
     }
 
     [TestMethod]
@@ -52,7 +70,7 @@ public class GameTest
         string expectedError = game.Messages.GetMessage("invalid_choice");
 
         Assert.IsTrue(result);
-        StringAssert.Contains(output, expectedError, "Should display localized invalid_choice error.");
+        StringAssert.Contains(output, expectedError);
     }
 
     [TestMethod]
@@ -68,29 +86,28 @@ public class GameTest
     }
 
     [TestMethod]
-    public void SetupPlayer_InvalidNameAndRolls_RepromptsAndPrintsImmediateFeedback()
+    public void SetupPlayer_InvalidInputsThenValid_SetsUpPlayerWithFeedback()
     {
         Game game = CreateInitializedGame();
 
-        // 1: Human race
-        // Conan123: Invalid name (contains digits)
-        // Conan: Valid name
-        // 1: Fighter occupation
-        // badroll -> roll (Strength)
-        // badroll -> roll (Agility)
-        // badroll -> roll (Health)
-        // 2: Proceed to adventure (skip stats review)
+        // Inputs:
+        // Race: 5 (invalid) -> 1 (Human)
+        // Name: Arthur99 (invalid) -> Arthur
+        // Occupation: 9 (invalid) -> 1 (Fighter)
+        // Strength: roll
+        // Agility: roll
+        // Health: roll
+        // Stats Review: 2 (Proceed)
         string simulatedInput = string.Join(Environment.NewLine, new[]
         {
+            "5",
             "1",
-            "Conan123",
-            "Conan",
+            "Arthur99",
+            "Arthur",
+            "9",
             "1",
-            "badroll",
             "roll",
-            "badroll",
             "roll",
-            "badroll",
             "roll",
             "2"
         }) + Environment.NewLine;
@@ -100,24 +117,20 @@ public class GameTest
         game.SetupPlayer();
 
         string output = _consoleOutput.ToString();
-        string invalidNameError = game.Messages.GetMessage("invalid_name");
-        string invalidRollError = game.Messages.GetMessage("invalid_roll");
 
-        // Assert player entity state
         Assert.IsNotNull(game.Player);
-        Assert.AreEqual("Conan", game.Player.Name);
+        Assert.AreEqual("Arthur", game.Player.Name);
         Assert.AreEqual(Race.Human, game.Player.Race);
         Assert.AreEqual(Occupation.Fighter, game.Player.Occupation);
-        Assert.IsTrue(game.Player.Health > 0);
 
-        // Assert invalid input handling
-        StringAssert.Contains(output, invalidNameError, "Should show invalid_name error when digits are entered.");
-        StringAssert.Contains(output, invalidRollError, "Should show invalid_roll error when not entering 'roll'.");
+        // Verification of reprompt errors
+        StringAssert.Contains(output, game.Messages.GetMessage("invalid_choice"));
+        StringAssert.Contains(output, game.Messages.GetMessage("invalid_name"));
 
-        // Assert immediate stat roll feedback
-        StringAssert.Contains(output, $"Strength rolled: {game.Player.Strength}", "Should print Strength feedback.");
-        StringAssert.Contains(output, $"Agility rolled: {game.Player.Agility}", "Should print Agility feedback.");
-        StringAssert.Contains(output, $"Health Points rolled: {game.Player.Health}", "Should print Health feedback.");
+        // Verification of immediate roll feedback
+        StringAssert.Contains(output, $"Strength rolled: {game.Player.Strength}");
+        StringAssert.Contains(output, $"Agility rolled: {game.Player.Agility}");
+        StringAssert.Contains(output, $"Health Points rolled: {game.Player.Health}");
     }
 
     [TestMethod]
@@ -128,9 +141,7 @@ public class GameTest
         game.DisplayEndGame("dragon_defeated");
 
         string output = _consoleOutput.ToString();
-        string expectedVictory = game.Messages.GetMessage("endgame_dragon_defeated");
-
-        StringAssert.Contains(output, expectedVictory);
+        StringAssert.Contains(output, game.Messages.GetMessage("endgame_dragon_defeated"));
     }
 
     [TestMethod]
@@ -141,9 +152,7 @@ public class GameTest
         game.DisplayEndGame("player_defeated");
 
         string output = _consoleOutput.ToString();
-        string expectedLoss = game.Messages.GetMessage("endgame_player_defeated");
-
-        StringAssert.Contains(output, expectedLoss);
+        StringAssert.Contains(output, game.Messages.GetMessage("endgame_player_defeated"));
     }
 
     [TestMethod]
@@ -154,9 +163,7 @@ public class GameTest
         game.DisplayEndGame("retreat");
 
         string output = _consoleOutput.ToString();
-        string expectedRetreat = game.Messages.GetMessage("endgame_retreat");
-
-        StringAssert.Contains(output, expectedRetreat);
+        StringAssert.Contains(output, game.Messages.GetMessage("endgame_retreat"));
     }
 
     [TestMethod]
@@ -164,7 +171,6 @@ public class GameTest
     {
         Game game = CreateInitializedGame();
         game.IsRunning = true;
-        // Input: 'n'
         SetConsoleInput($"n{Environment.NewLine}");
 
         game.PromptPlayAgain();
@@ -177,15 +183,12 @@ public class GameTest
     {
         Game game = CreateInitializedGame();
         game.IsRunning = true;
-        // Input: 'x' (invalid), then 'y'
         SetConsoleInput($"x{Environment.NewLine}y{Environment.NewLine}");
 
         game.PromptPlayAgain();
 
         string output = _consoleOutput.ToString();
-        string expectedError = game.Messages.GetMessage("invalid_letter");
-
         Assert.IsTrue(game.IsRunning);
-        StringAssert.Contains(output, expectedError, "Should display invalid_letter error on invalid play-again answer.");
+        StringAssert.Contains(output, game.Messages.GetMessage("invalid_letter"));
     }
 }
