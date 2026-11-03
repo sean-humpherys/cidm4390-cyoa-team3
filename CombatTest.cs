@@ -663,7 +663,7 @@ public class CombatTests
     }
 
     // ---------------------------------------------------------------
-    // CombatResult (PBI #20)
+    // CombatResult (PBI #20)/ (PBI #26: Update tests to not print ending)
     // ---------------------------------------------------------------
 
     [TestMethod]
@@ -684,7 +684,7 @@ public class CombatTests
 
     [TestMethod]
     [Timeout(5000)]
-    public void Battle_DragonDefeated_ReturnsDragonDefeatedAndPrintsEndingAfterArggg()
+    public void Battle_DragonDefeated_ReturnsDragonDefeatedAndDoesNotPrintEnding()
     {
         Player player = CreatePlayer(AlwaysSucceeds, AlwaysFails, 50, maxDamage: 1);
         Dragon dragon = CreateDragon(AlwaysSucceeds, AlwaysFails, 1);
@@ -693,19 +693,13 @@ public class CombatTests
         CombatResult result = new Combat(player, dragon).Battle();
 
         Assert.AreEqual(CombatResult.DragonDefeated, result);
-
-        int arggg = Output.IndexOf("Arggg!", StringComparison.Ordinal);
-        int ending = Output.IndexOf(
-            "With the dragon vanquished, you collect the horde of gold, return home, rich and famous. The End.",
-            StringComparison.Ordinal);
-
-        Assert.IsTrue(arggg >= 0, "'Arggg!' was not printed.");
-        Assert.IsTrue(ending > arggg, "The ending must print after 'Arggg!'.");
+        StringAssert.Contains(Output, "Arggg!");
+        Assert.IsFalse(Output.Contains("The End."));
     }
 
     [TestMethod]
     [Timeout(5000)]
-    public void Battle_PlayerDefeated_ReturnsPlayerDefeatedAndPrintsEndingAfterOhNo()
+    public void Battle_PlayerDefeated_ReturnsPlayerDefeatedAndDoesNotPrintEnding()
     {
         Player player = CreatePlayer(AlwaysFails, AlwaysFails, 1);
         Dragon dragon = CreateDragon(AlwaysSucceeds, AlwaysFails, 50, maxDamage: 1);
@@ -714,20 +708,14 @@ public class CombatTests
         CombatResult result = new Combat(player, dragon).Battle();
 
         Assert.AreEqual(CombatResult.PlayerDefeated, result);
-
-        int ohNo = Output.IndexOf("Oh no!", StringComparison.Ordinal);
-        int ending = Output.IndexOf(
-            "The dragon laughs as your eyesight fades. You are defeated. Your family mourns their loss. The End.",
-            StringComparison.Ordinal);
-
-        Assert.IsTrue(ohNo >= 0, "'Oh no!' was not printed.");
-        Assert.IsTrue(ending > ohNo, "The ending must print after 'Oh no!'.");
+        StringAssert.Contains(Output, "Oh no!");
+        Assert.IsFalse(Output.Contains("The End."));
         Assert.IsFalse(Output.Contains("You hastily retreat"));
     }
 
     [TestMethod]
     [Timeout(5000)]
-    public void Messages_EndgameText_ComesFromMessages()
+    public void Messages_EndgameText_IsNotPrintedByCombat()
     {
         Messages messages = MessagesTestHelper.Create(
             ("endgame_dragon_defeated", "DRAGON-ENDING"),
@@ -738,13 +726,14 @@ public class CombatTests
         Dragon dragon = CreateDragon(AlwaysFails, AlwaysFails, 1);
         SetInput("r");
         new Combat(player, dragon, messages).Battle();
-        StringAssert.Contains(Output, "DRAGON-ENDING");
-
+        
         // Player defeated
         Player weakPlayer = CreatePlayer(AlwaysFails, AlwaysFails, 1);
         Dragon strongDragon = CreateDragon(AlwaysSucceeds, AlwaysFails, 50, maxDamage: 1);
         SetInput("r");
         new Combat(weakPlayer, strongDragon, messages).Battle();
-        StringAssert.Contains(Output, "PLAYER-ENDING");
+
+        Assert.IsFalse(Output.Contains("DRAGON-ENDING"));
+        Assert.IsFalse(Output.Contains("PLAYER-ENDING"));
     }
 }

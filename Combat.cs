@@ -94,15 +94,11 @@ public class Combat
 
                     if (dragon.health <= 0)
                     {
-                        // Final exclamation first, then the ending narrative in green.
+                        // Final exclamation. Game prints the ending.
                         Console.WriteLine(GetText(
                             "dragon_defeated_true",
                             "With the last words of 'Arggg!', you have defeated the dragon."));
 
-                        ConsoleDisplayAndInput.PrintStoryGreen(GetText(
-                            "endgame_dragon_defeated",
-                            "With the dragon vanquished, you collect the horde of gold, " +
-                            "return home, rich and famous. The End."));
 
                         return CombatResult.DragonDefeated;
                     }
@@ -125,7 +121,6 @@ public class Combat
 
             if (player.Health <= 0)
             {
-                // Ending text was already printed by DragonAttacksPlayerSequence.
                 return CombatResult.PlayerDefeated;
             }
 
@@ -185,15 +180,10 @@ public class Combat
 
                 if (player.Health <= 0)
                 {
-                    // Final exclamation first, then the ending narrative in green.
+                    // Final exclamation. Game prints the ending.
                     Console.WriteLine(GetText(
                         "player_defeated_true",
                         "With the last words of 'Oh no!', you have been defeated by the dragon."));
-
-                    ConsoleDisplayAndInput.PrintStoryGreen(GetText(
-                        "endgame_player_defeated",
-                        "The dragon laughs as your eyesight fades. You are defeated. " +
-                        "Your family mourns their loss. The End."));
 
                     return;
                 }
